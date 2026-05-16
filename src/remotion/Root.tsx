@@ -1,5 +1,12 @@
 import React from "react";
 import { Composition } from "remotion";
+import {
+  BATTLEFIELD_DURATION_IN_FRAMES,
+  BATTLEFIELD_FPS,
+  BATTLEFIELD_HEIGHT,
+  BATTLEFIELD_WIDTH,
+  BattlefieldStrategyDemo,
+} from "./BattlefieldStrategyDemo";
 import { DynamicComp } from "./DynamicComp";
 
 const defaultCode = `import { AbsoluteFill } from "remotion";
@@ -20,6 +27,14 @@ export const RemotionRoot: React.FC = () => {
           durationInFrames: props.durationInFrames as number,
           fps: props.fps as number,
         })}
+      />
+      <Composition
+        id="BattlefieldStrategyDemo"
+        component={BattlefieldStrategyDemo}
+        durationInFrames={BATTLEFIELD_DURATION_IN_FRAMES}
+        fps={BATTLEFIELD_FPS}
+        width={BATTLEFIELD_WIDTH}
+        height={BATTLEFIELD_HEIGHT}
       />
     </>
   );
