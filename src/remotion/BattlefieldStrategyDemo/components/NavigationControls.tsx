@@ -1,129 +1,134 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { FC } from "react";
 import { interpolate, spring, useVideoConfig } from "remotion";
 
-import { MOVE_DURATION_IN_FRAMES, TOTAL_MOVES } from "../data";
+import { MOVE_STEP_FRAMES, MOVES } from "../data";
+import type { NavigationAction } from "../types";
 
 interface NavigationControlsProps {
   frame: number;
   moveIndex: number;
+  action: NavigationAction;
 }
 
-export const NavigationControls: React.FC<NavigationControlsProps> = ({
+export const NavigationControls: FC<NavigationControlsProps> = ({
   frame,
   moveIndex,
+  action,
 }) => {
   const { fps } = useVideoConfig();
+  const totalMoves = MOVES.length;
   const previousEnabled = moveIndex > 0;
-  const nextEnabled = moveIndex < TOTAL_MOVES - 1;
-  const nextPressed = nextEnabled && frame > MOVE_DURATION_IN_FRAMES - 24;
-  const previousPulse = previousEnabled && frame < 18;
-  const progress = interpolate(
+  const nextEnabled = moveIndex < totalMoves - 1;
+  const previousPressed =
+    action === "previous" || (action === "both" && frame >= 8 && frame <= 24);
+  const nextPressed =
+    action === "next" || (action === "both" && frame >= 42 && frame <= 62);
+  const pressSpring = spring({
+    frame: Math.max(0, frame - 42),
+    fps,
+    config: { damping: 14, stiffness: 180 },
+  });
+  const stepProgress = interpolate(
     frame,
-    [0, MOVE_DURATION_IN_FRAMES - 1],
-    [0, 1],
+    [0, MOVE_STEP_FRAMES - 1],
+    [0, action === "next" || action === "both" ? 1 : 0.35],
     {
       extrapolateLeft: "clamp",
       extrapolateRight: "clamp",
     },
   );
-  const pressSpring = spring({
-    frame: Math.max(0, frame - (MOVE_DURATION_IN_FRAMES - 24)),
-    fps,
-    config: { damping: 14, stiffness: 180 },
-  });
+  const overallProgress =
+    ((moveIndex + Math.min(stepProgress, 1)) / totalMoves) * 100;
 
   return (
-    <div
+    <section
       style={{
-        width: 1180,
-        height: 78,
-        display: "flex",
+        width: "100%",
+        height: 64,
+        display: "grid",
+        gridTemplateColumns: "174px 1fr 174px",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 18,
+        gap: 12,
       }}
     >
       <button
+        type="button"
         style={{
-          width: 180,
-          height: 54,
-          border: "1px solid rgba(220,233,216,0.22)",
-          borderRadius: 8,
-          background: previousPulse
-            ? "rgba(220,233,216,0.18)"
-            : "rgba(18,23,19,0.82)",
-          color: previousEnabled ? "#eef8ea" : "rgba(238,248,234,0.36)",
+          height: 46,
+          border: "1px solid #465147",
+          background: previousPressed
+            ? "rgba(214,162,58,0.18)"
+            : "rgba(17,22,18,0.88)",
+          color: previousEnabled ? "#d6a23a" : "rgba(216,222,207,0.34)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
-          fontSize: 20,
-          fontWeight: 900,
+          font: '900 12px "Lucida Console", "Courier New", monospace',
+          textTransform: "uppercase",
+          transform: `scale(${previousPressed ? 0.965 : 1})`,
         }}
       >
-        <ChevronLeft size={24} strokeWidth={3} />
+        <ChevronLeft size={20} strokeWidth={3} />
         Previous
       </button>
 
       <div
         style={{
-          flex: 1,
-          height: 54,
-          borderRadius: 8,
-          border: "1px solid rgba(220,233,216,0.16)",
-          background: "rgba(18,23,19,0.58)",
-          padding: "0 18px",
-          display: "flex",
+          height: 46,
+          border: "1px solid #465147",
+          background: "rgba(17,22,18,0.82)",
+          display: "grid",
+          gridTemplateColumns: "118px 1fr 126px",
           alignItems: "center",
-          gap: 16,
+          gap: 12,
+          padding: "0 12px",
         }}
       >
         <div
           style={{
-            color: "#f6fbf4",
-            fontSize: 20,
-            fontWeight: 900,
-            width: 108,
+            color: "#eef3e7",
+            font: '900 12px "Lucida Console", "Courier New", monospace',
+            textTransform: "uppercase",
           }}
         >
-          Move {moveIndex + 1}/{TOTAL_MOVES}
+          Move {moveIndex + 1} / {totalMoves}
         </div>
         <div
           style={{
-            height: 12,
-            flex: 1,
-            borderRadius: 999,
-            background: "rgba(220,233,216,0.13)",
+            height: 10,
+            border: "1px solid #465147",
+            background: "#111612",
             overflow: "hidden",
           }}
         >
           <div
             style={{
               height: "100%",
-              width: `${progress * 100}%`,
-              background: "linear-gradient(90deg, #9bdc7e, #f6d04d)",
-              borderRadius: 999,
+              width: `${overallProgress}%`,
+              background: "linear-gradient(90deg, #8fb36a, #d6a23a)",
             }}
           />
         </div>
         <div
           style={{
             display: "flex",
-            gap: 8,
+            justifyContent: "flex-end",
+            gap: 6,
           }}
         >
-          {Array.from({ length: TOTAL_MOVES }, (_, index) => (
+          {MOVES.map((move) => (
             <div
-              key={index}
+              key={move.index}
               style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
+                width: 12,
+                height: 12,
                 background:
-                  index <= moveIndex ? "#9bdc7e" : "rgba(220,233,216,0.22)",
+                  move.index <= moveIndex ? "#8fb36a" : "rgba(216,222,207,0.22)",
                 boxShadow:
-                  index === moveIndex
-                    ? "0 0 16px rgba(155,220,126,0.68)"
+                  move.index === moveIndex
+                    ? "0 0 12px rgba(143,179,106,0.7)"
                     : "none",
               }}
             />
@@ -132,29 +137,28 @@ export const NavigationControls: React.FC<NavigationControlsProps> = ({
       </div>
 
       <button
+        type="button"
         style={{
-          width: 180,
-          height: 54,
-          border: "1px solid rgba(220,233,216,0.22)",
-          borderRadius: 8,
-          background: nextPressed ? "#9bdc7e" : "rgba(18,23,19,0.82)",
+          height: 46,
+          border: "1px solid #5f7d4b",
+          background: nextPressed ? "#8fb36a" : "rgba(17,22,18,0.88)",
           color: nextEnabled
             ? nextPressed
-              ? "#101510"
-              : "#eef8ea"
-            : "rgba(238,248,234,0.36)",
+              ? "#111612"
+              : "#eef3e7"
+            : "rgba(216,222,207,0.34)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
-          fontSize: 20,
-          fontWeight: 900,
-          transform: `scale(${nextPressed ? interpolate(pressSpring, [0, 1], [1, 0.96]) : 1})`,
+          font: '900 12px "Lucida Console", "Courier New", monospace',
+          textTransform: "uppercase",
+          transform: `scale(${nextPressed ? interpolate(pressSpring, [0, 1], [1, 0.965]) : 1})`,
         }}
       >
         Next
-        <ChevronRight size={24} strokeWidth={3} />
+        <ChevronRight size={20} strokeWidth={3} />
       </button>
-    </div>
+    </section>
   );
 };

@@ -1,51 +1,57 @@
+import type { FC, ReactNode } from "react";
 import { interpolate, spring, useVideoConfig } from "remotion";
 
 import type { MoveStep } from "../types";
 
+type HighlightCard = "planner" | "decision" | "unit" | null;
+
 interface ReasoningPanelProps {
   move: MoveStep;
   frame: number;
+  highlight?: HighlightCard;
 }
 
-export const ReasoningPanel: React.FC<ReasoningPanelProps> = ({
-  move,
-  frame,
-}) => {
-  const { fps } = useVideoConfig();
-  const entrance = spring({
-    frame: Math.max(0, frame - 4),
-    fps,
-    config: { damping: 20, stiffness: 130 },
-  });
-  const detailOpacity = interpolate(frame, [20, 42], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const scoreFill = interpolate(
-    frame,
-    [18, 62],
-    [0, move.index === 0 ? 68 : 82],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-    },
-  );
+const Status: FC<{ label: string; amber?: boolean }> = ({ label, amber }) => (
+  <span
+    style={{
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "4px 7px",
+      border: `1px solid ${amber ? "rgba(214,162,58,0.55)" : "#5f7d4b"}`,
+      color: amber ? "#d6a23a" : "#8fb36a",
+      background: amber ? "rgba(214,162,58,0.08)" : "rgba(143,179,106,0.08)",
+      font: '700 10px "Lucida Console", "Courier New", monospace',
+      textTransform: "uppercase",
+      whiteSpace: "nowrap",
+    }}
+  >
+    <span
+      style={{
+        width: 7,
+        height: 7,
+        background: amber ? "#d6a23a" : "#8fb36a",
+      }}
+    />
+    {label}
+  </span>
+);
+
+const Card: FC<{
+  title: string;
+  status: string;
+  amber?: boolean;
+  highlighted?: boolean;
+  children: ReactNode;
+}> = ({ title, status, amber, highlighted, children }) => {
+  const glow = highlighted ? 0.88 : 0;
 
   return (
-    <aside
+    <article
       style={{
-        width: 548,
-        height: 888,
-        borderRadius: 8,
-        border: "1px solid rgba(220,233,216,0.2)",
-        background: "rgba(18, 23, 19, 0.94)",
-        boxShadow: "0 24px 54px rgba(0,0,0,0.34)",
-        padding: 28,
-        display: "flex",
-        flexDirection: "column",
-        gap: 22,
-        transform: `translateX(${interpolate(entrance, [0, 1], [26, 0])}px)`,
-        opacity: entrance,
+        background: "#222a25",
+        border: `1px solid ${amber ? "rgba(214,162,58,0.75)" : "#687466"}`,
+        boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.32), 0 0 ${26 * glow}px rgba(214,162,58,${glow})`,
       }}
     >
       <div
@@ -53,180 +59,178 @@ export const ReasoningPanel: React.FC<ReasoningPanelProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 18,
+          gap: 10,
+          padding: "8px 10px",
+          background: "#111612",
+          borderBottom: `1px solid ${amber ? "rgba(214,162,58,0.65)" : "#687466"}`,
         }}
       >
-        <div>
-          <div
-            style={{
-              color: "#9bdc7e",
-              fontSize: 17,
-              fontWeight: 900,
-              marginBottom: 8,
-            }}
-          >
-            Agent Reasoning
-          </div>
-          <div
-            style={{
-              color: "#f6fbf4",
-              fontSize: 34,
-              lineHeight: 1.05,
-              fontWeight: 900,
-            }}
-          >
-            {move.label}
-          </div>
-        </div>
-        <div
+        <h3
           style={{
-            width: 104,
-            height: 104,
-            borderRadius: "50%",
-            border: "10px solid rgba(220,233,216,0.16)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#f6fbf4",
-            fontSize: 26,
-            fontWeight: 900,
-            background: `conic-gradient(#9bdc7e ${scoreFill}%, rgba(220,233,216,0.16) 0)`,
+            margin: 0,
+            color: "#eef3e7",
+            font: '700 13px "Lucida Console", "Courier New", monospace',
+            textTransform: "uppercase",
+            letterSpacing: 0,
           }}
         >
-          {Math.round(scoreFill)}
-        </div>
+          {title}
+        </h3>
+        <Status label={status} amber={amber} />
       </div>
+      <div style={{ display: "grid", gap: 9, padding: 10 }}>{children}</div>
+    </article>
+  );
+};
 
-      <div
-        style={{
-          borderRadius: 8,
-          border: "1px solid rgba(155,220,126,0.26)",
-          background: "rgba(155, 220, 126, 0.08)",
-          padding: 18,
-        }}
+export const ReasoningPanel: FC<ReasoningPanelProps> = ({
+  move,
+  frame,
+  highlight = null,
+}) => {
+  const { fps } = useVideoConfig();
+  const entrance = spring({
+    frame: Math.max(0, frame - 4),
+    fps,
+    config: { damping: 20, stiffness: 130 },
+  });
+  const bodyOpacity = interpolate(frame, [12, 28], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <aside
+      style={{
+        width: 330,
+        display: "grid",
+        gap: 10,
+        alignContent: "start",
+        transform: `translateX(${interpolate(entrance, [0, 1], [20, 0])}px)`,
+        opacity: entrance,
+      }}
+    >
+      <Card
+        title="Planner Output"
+        status="3 Routes"
+        highlighted={highlight === "planner"}
       >
+        <p
+          style={{
+            margin: 0,
+            color: "#a7b09f",
+            fontSize: 13,
+            lineHeight: 1.35,
+          }}
+        >
+          Click route overlays to inspect model reasoning. Each path represents
+          one planner route recommendation.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {["Maneuver", "Force", "Coordination"].map((label) => (
+            <span
+              key={label}
+              style={{
+                padding: "4px 6px",
+                border: "1px solid #465147",
+                color: "#d8decf",
+                background: "#151b17",
+                font: '700 10px "Lucida Console", "Courier New", monospace',
+                textTransform: "uppercase",
+              }}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      </Card>
+
+      <Card
+        title="Next Step"
+        status={`Step ${String(move.index + 1).padStart(2, "0")}`}
+        amber
+        highlighted={highlight === "decision"}
+      >
+        <p
+          style={{
+            margin: 0,
+            color: "#a7b09f",
+            fontSize: 13,
+            lineHeight: 1.35,
+          }}
+        >
+          Click amber path for tactical decision reasoning.
+        </p>
         <div
           style={{
-            color: "#f6fbf4",
-            fontSize: 25,
-            lineHeight: 1.18,
-            fontWeight: 900,
-            marginBottom: 12,
+            opacity: bodyOpacity,
+            border: "1px solid #465147",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "58px 1fr 54px 62px",
+              color: "#d6a23a",
+              background: "#111612",
+              font: '700 10px "Lucida Console", "Courier New", monospace',
+              textTransform: "uppercase",
+            }}
+          >
+            <div style={{ padding: "7px 6px" }}>Unit</div>
+            <div style={{ padding: "7px 6px" }}>Action</div>
+            <div style={{ padding: "7px 6px" }}>From</div>
+            <div style={{ padding: "7px 6px" }}>To</div>
+          </div>
+          {move.actions.map((action) => (
+            <div
+              key={`${move.index}-${action.unitId}`}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "58px 1fr 54px 62px",
+                borderTop: "1px solid #465147",
+                color: "#d8decf",
+                background: "#18201b",
+                font: '700 10px "Lucida Console", "Courier New", monospace',
+              }}
+            >
+              <div style={{ padding: "7px 6px" }}>{action.unitId}</div>
+              <div style={{ padding: "7px 6px" }}>{action.action}</div>
+              <div style={{ padding: "7px 6px" }}>{action.from}</div>
+              <div style={{ padding: "7px 6px" }}>{action.to}</div>
+            </div>
+          ))}
+        </div>
+        <p
+          style={{
+            margin: 0,
+            color: "#d8decf",
+            fontSize: 13,
+            lineHeight: 1.35,
           }}
         >
           {move.reasoning.headline}
-        </div>
-        <div
+        </p>
+      </Card>
+
+      <Card
+        title="Unit Inspection"
+        status="Hover"
+        highlighted={highlight === "unit"}
+      >
+        <p
           style={{
-            color: "#dce9d8",
-            fontSize: 20,
+            margin: 0,
+            color: "#a7b09f",
+            fontSize: 13,
             lineHeight: 1.35,
-            fontWeight: 700,
           }}
         >
-          {move.reasoning.bestMove}
-        </div>
-      </div>
-
-      <div
-        style={{
-          opacity: detailOpacity,
-          color: "#d8e4d1",
-          fontSize: 20,
-          lineHeight: 1.42,
-          fontWeight: 600,
-        }}
-      >
-        {move.reasoning.explanation}
-      </div>
-
-      <div
-        style={{
-          opacity: detailOpacity,
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
-        {move.reasoning.factors.map((factor, index) => (
-          <div
-            key={factor}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 12,
-              borderRadius: 7,
-              background: "rgba(244,247,239,0.06)",
-              border: "1px solid rgba(244,247,239,0.1)",
-              padding: "13px 14px",
-              transform: `translateY(${interpolate(
-                frame,
-                [28 + index * 6, 44 + index * 6],
-                [12, 0],
-                {
-                  extrapolateLeft: "clamp",
-                  extrapolateRight: "clamp",
-                },
-              )}px)`,
-            }}
-          >
-            <div
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: "50%",
-                background: "#9bdc7e",
-                color: "#101510",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                fontSize: 16,
-                fontWeight: 900,
-              }}
-            >
-              {index + 1}
-            </div>
-            <div
-              style={{
-                color: "#eef8ea",
-                fontSize: 18,
-                lineHeight: 1.28,
-                fontWeight: 700,
-              }}
-            >
-              {factor}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div
-        style={{
-          marginTop: "auto",
-          borderTop: "1px solid rgba(220,233,216,0.12)",
-          paddingTop: 18,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-          color: "#aebca8",
-          fontSize: 16,
-          fontWeight: 800,
-        }}
-      >
-        <div>
-          Threat model
-          <span style={{ display: "block", color: "#f6fbf4", marginTop: 6 }}>
-            Live scored
-          </span>
-        </div>
-        <div>
-          Next action
-          <span style={{ display: "block", color: "#f6fbf4", marginTop: 6 }}>
-            Deterministic
-          </span>
-        </div>
-      </div>
+          Hover friendly unit markers to show type, role, size, and command
+          state.
+        </p>
+      </Card>
     </aside>
   );
 };

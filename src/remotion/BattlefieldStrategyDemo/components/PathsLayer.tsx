@@ -1,11 +1,14 @@
+import type { FC } from "react";
 import { interpolate, spring, useVideoConfig } from "remotion";
 
-import { MAP_HEIGHT, MAP_WIDTH } from "../data";
+import { MAP_HEIGHT, MAP_WIDTH, UNIT_ORDER } from "../data";
 import type { MoveStep, Point, StrategyPath, UnitId } from "../types";
 
 interface PathsLayerProps {
   move: MoveStep;
   frame: number;
+  selectedUnitId: UnitId | null;
+  showPaths: boolean;
 }
 
 interface Segment {
@@ -16,35 +19,49 @@ interface Segment {
   segmentIndex: number;
 }
 
-const unitOrder: UnitId[] = ["alpha", "bravo", "charlie"];
+const BEST_ARROW_COLOR = "#f6d04d";
 
 const distance = (from: Point, to: Point) =>
-  Math.hypot(to.x - from.x, to.y - from.y);
+  Math.sqrt((to.x - from.x) ** 2 + (to.y - from.y) ** 2);
 
-const getSegments = (strategyPath: StrategyPath): Segment[] =>
-  unitOrder.flatMap((unitId) => {
-    const points = strategyPath.unitPaths[unitId];
+const segmentsForStrategy = (
+  strategy: StrategyPath,
+  visibleUnitIds: UnitId[],
+): Segment[] =>
+  visibleUnitIds.flatMap((unitId) => {
+    const points = strategy.unitPaths[unitId];
 
     return points.slice(0, -1).map((point, index) => ({
       from: point,
       to: points[index + 1],
       unitId,
-      strategy: strategyPath,
+      strategy,
       segmentIndex: index,
     }));
   });
 
-const ArrowSegment: React.FC<{
+const ArrowSegment: FC<{
   segment: Segment;
   markerId: string;
   opacity: number;
   strokeWidth: number;
+  color: string;
   progress: number;
   dashed: boolean;
-}> = ({ segment, markerId, opacity, strokeWidth, progress, dashed }) => {
+  glow: boolean;
+}> = ({
+  segment,
+  markerId,
+  opacity,
+  strokeWidth,
+  color,
+  progress,
+  dashed,
+  glow,
+}) => {
   const length = distance(segment.from, segment.to);
-  const dashArray = dashed ? "12 16" : length;
-  const dashOffset = dashed ? 0 : length * (1 - progress);
+  const strokeDasharray = dashed ? segment.strategy.dash : `${length}`;
+  const strokeDashoffset = dashed ? 0 : length * (1 - progress);
 
   return (
     <line
@@ -52,41 +69,52 @@ const ArrowSegment: React.FC<{
       y1={segment.from.y}
       x2={segment.to.x}
       y2={segment.to.y}
-      stroke={segment.strategy.color}
+      stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
       markerEnd={`url(#${markerId})`}
       opacity={opacity}
-      strokeDasharray={dashArray}
-      strokeDashoffset={dashOffset}
-      filter={strokeWidth > 8 ? "url(#bestArrowGlow)" : undefined}
+      strokeDasharray={strokeDasharray}
+      strokeDashoffset={strokeDashoffset}
+      filter={glow ? "url(#bestArrowGlow)" : undefined}
     />
   );
 };
 
-export const PathsLayer: React.FC<PathsLayerProps> = ({ move, frame }) => {
+export const PathsLayer: FC<PathsLayerProps> = ({
+  move,
+  frame,
+  selectedUnitId,
+  showPaths,
+}) => {
   const { fps } = useVideoConfig();
+  const visibleUnitIds = selectedUnitId ? [selectedUnitId] : UNIT_ORDER;
+  const reveal = showPaths
+    ? spring({
+        frame: Math.max(0, frame - 4),
+        fps,
+        config: { damping: 18, stiffness: 120 },
+      })
+    : 0;
+  const bestReveal = showPaths
+    ? spring({
+        frame: Math.max(0, frame - 28),
+        fps,
+        config: { damping: 15, stiffness: 170 },
+      })
+    : 0;
+  const labelOpacity = interpolate(frame, [18, 32], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const focusOpacity = selectedUnitId ? 1 : 0;
+  const bestPath = move.paths.find((path) => path.id === move.bestStrategyId);
+  const actionForUnit = (unitId: UnitId) =>
+    move.actions.find((action) => action.unitId === unitId);
 
-  if (move.paths.length === 0 || move.bestStrategyId === null) {
+  if (!showPaths) {
     return null;
   }
-
-  const reveal = interpolate(frame, [8, 26], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const bestReveal = spring({
-    frame: Math.max(0, frame - 30),
-    fps,
-    config: { damping: 16, stiffness: 150 },
-  });
-  const labelOpacity = interpolate(frame, [18, 36], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
-  const bestPath = move.paths.find(
-    (pathOption) => pathOption.id === move.bestStrategyId,
-  );
 
   return (
     <svg
@@ -97,140 +125,219 @@ export const PathsLayer: React.FC<PathsLayerProps> = ({ move, frame }) => {
         position: "absolute",
         inset: 0,
         overflow: "visible",
+        pointerEvents: "none",
       }}
     >
       <defs>
-        {move.paths.map((pathOption) => (
+        {move.paths.map((path) => (
           <marker
-            key={pathOption.id}
-            id={`arrow-${move.index}-${pathOption.id}`}
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="6"
-            markerHeight="6"
-            orient="auto-start-reverse"
+            key={path.id}
+            id={`arrow-${move.index}-${path.id}`}
+            viewBox="0 0 12 12"
+            refX="10.2"
+            refY="6"
+            markerWidth="4.6"
+            markerHeight="4.6"
+            orient="auto"
+            markerUnits="strokeWidth"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill={pathOption.color} />
+            <path d="M 0 0 L 12 6 L 0 12 z" fill={path.color} />
           </marker>
         ))}
         <marker
           id={`best-arrow-${move.index}`}
-          viewBox="0 0 10 10"
-          refX="8"
-          refY="5"
-          markerWidth="8"
-          markerHeight="8"
-          orient="auto-start-reverse"
+          viewBox="0 0 12 12"
+          refX="10.2"
+          refY="6"
+          markerWidth="5.6"
+          markerHeight="5.6"
+          orient="auto"
+          markerUnits="strokeWidth"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" fill={bestPath?.color ?? "#ffffff"} />
+          <path d="M 0 0 L 12 6 L 0 12 z" fill={BEST_ARROW_COLOR} />
         </marker>
         <filter id="bestArrowGlow" x="-40%" y="-40%" width="180%" height="180%">
           <feDropShadow
             dx="0"
             dy="0"
             stdDeviation="4"
-            floodColor={bestPath?.color ?? "#ffffff"}
-            floodOpacity="0.7"
+            floodColor={BEST_ARROW_COLOR}
+            floodOpacity="0.74"
           />
         </filter>
       </defs>
 
-      {move.paths.flatMap((strategyPath, strategyIndex) =>
-        getSegments(strategyPath).map((segment, segmentIndex) => {
-          const stagger = strategyIndex * 4 + segmentIndex * 2;
-          const segmentProgress = interpolate(
-            frame,
-            [10 + stagger, 34 + stagger],
-            [0, 1],
-            {
+      {visibleUnitIds.map((unitId) => {
+        const start = move.startPositions[unitId];
+
+        return (
+          <g key={`start-${unitId}`} opacity={reveal}>
+            <circle
+              cx={start.x}
+              cy={start.y}
+              r={13}
+              fill="rgba(17, 22, 18, 0.8)"
+              stroke="#eef3e7"
+              strokeWidth={2}
+            />
+            <circle cx={start.x} cy={start.y} r={5} fill="#eef3e7" />
+            <text
+              x={start.x + 18}
+              y={start.y - 14}
+              fill="#eef3e7"
+              fontFamily='"Lucida Console", "Courier New", monospace'
+              fontSize="11"
+              fontWeight="700"
+            >
+              START {unitId}
+            </text>
+          </g>
+        );
+      })}
+
+      {selectedUnitId ? (
+        <g
+          opacity={interpolate(focusOpacity, [0, 1], [0, 1])}
+          transform="translate(24 36)"
+        >
+          <rect
+            width="238"
+            height="34"
+            fill="rgba(17, 22, 18, 0.86)"
+            stroke="#d6a23a"
+          />
+          <text
+            x="12"
+            y="22"
+            fill="#d6a23a"
+            fontFamily='"Lucida Console", "Courier New", monospace'
+            fontSize="12"
+            fontWeight="700"
+          >
+            FOCUS: UNIT {selectedUnitId} PATHS ONLY
+          </text>
+        </g>
+      ) : null}
+
+      {move.paths.flatMap((strategy, strategyIndex) =>
+        segmentsForStrategy(strategy, visibleUnitIds).map((segment, index) => {
+          const isBest = strategy.id === move.bestStrategyId;
+          const stagger = strategyIndex * 5 + index * 2;
+          const segmentOpacity =
+            reveal *
+            interpolate(frame, [8 + stagger, 26 + stagger], [0, 1], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
-            },
-          );
-          const isBest = strategyPath.id === move.bestStrategyId;
+            }) *
+            (isBest ? 0.62 : 0.28);
 
           return (
             <ArrowSegment
-              key={`${strategyPath.id}-${segment.unitId}-${segment.segmentIndex}`}
+              key={`${strategy.id}-${segment.unitId}-${segment.segmentIndex}`}
               segment={segment}
-              markerId={`arrow-${move.index}-${strategyPath.id}`}
-              opacity={reveal * (isBest ? 0.58 : 0.27)}
-              strokeWidth={isBest ? 6 : 4}
-              progress={segmentProgress}
-              dashed={!isBest}
+              markerId={`arrow-${move.index}-${strategy.id}`}
+              opacity={segmentOpacity}
+              strokeWidth={isBest ? 4.4 : 3.2}
+              color={strategy.color}
+              progress={1}
+              dashed
+              glow={false}
             />
           );
         }),
       )}
 
       {bestPath
-        ? unitOrder.map((unitId, unitIndex) => {
+        ? visibleUnitIds.map((unitId, index) => {
             const points = bestPath.unitPaths[unitId];
-            const segment = {
+            const action = actionForUnit(unitId);
+            const isWait = action?.action === "WAIT";
+
+            if (isWait) {
+              const start = move.startPositions[unitId];
+
+              return (
+                <g key={`best-wait-${unitId}`} opacity={bestReveal}>
+                  <circle
+                    cx={start.x}
+                    cy={start.y}
+                    r={22}
+                    fill="rgba(214,162,58,0.08)"
+                    stroke={BEST_ARROW_COLOR}
+                    strokeWidth="4"
+                    strokeDasharray="5 5"
+                    filter="url(#bestArrowGlow)"
+                  />
+                  <text
+                    x={start.x + 28}
+                    y={start.y + 5}
+                    fill={BEST_ARROW_COLOR}
+                    fontFamily='"Lucida Console", "Courier New", monospace'
+                    fontSize="12"
+                    fontWeight="900"
+                  >
+                    WAIT
+                  </text>
+                </g>
+              );
+            }
+
+            const segment: Segment = {
               from: points[0],
               to: points[1],
               unitId,
               strategy: bestPath,
               segmentIndex: 0,
             };
-            const pulse = interpolate(
-              frame % 28,
-              [0, 14, 27],
-              [0.86, 1, 0.86],
-              {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              },
-            );
+            const pulse = interpolate(frame % 30, [0, 15, 29], [0.88, 1, 0.88], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            });
 
             return (
               <ArrowSegment
-                key={`best-${unitId}`}
+                key={`best-next-${unitId}`}
                 segment={segment}
                 markerId={`best-arrow-${move.index}`}
                 opacity={bestReveal * pulse}
-                strokeWidth={11 + unitIndex * 0.3}
+                strokeWidth={8.8 + index * 0.25}
+                color={BEST_ARROW_COLOR}
                 progress={bestReveal}
                 dashed={false}
+                glow
               />
             );
           })
         : null}
 
-      {move.paths.map((pathOption, index) => {
-        const alphaPath = pathOption.unitPaths.alpha;
-        const labelPosition = alphaPath[Math.min(1, alphaPath.length - 1)];
-        const isBest = pathOption.id === move.bestStrategyId;
+      {move.paths.map((strategy, index) => {
+        const labelPath = strategy.unitPaths[selectedUnitId ?? "331"];
+        const anchor = labelPath[Math.min(1, labelPath.length - 1)];
+        const isBest = strategy.id === move.bestStrategyId;
 
         return (
           <g
-            key={`label-${pathOption.id}`}
-            opacity={labelOpacity * (isBest ? 1 : 0.72)}
-            transform={`translate(${labelPosition.x + 18}, ${
-              labelPosition.y - 34 + index * 18
-            })`}
+            key={`strategy-label-${strategy.id}`}
+            opacity={reveal * labelOpacity * (isBest ? 1 : 0.72)}
+            transform={`translate(${anchor.x + 18}, ${anchor.y - 38 + index * 22})`}
           >
             <rect
-              x="0"
-              y="0"
-              width={isBest ? 178 : 154}
-              height="34"
-              rx="6"
-              fill="rgba(12, 16, 13, 0.78)"
-              stroke={pathOption.color}
-              strokeOpacity={isBest ? 0.95 : 0.46}
+              width={isBest ? 184 : 156}
+              height="32"
+              fill="rgba(17, 22, 18, 0.88)"
+              stroke={isBest ? BEST_ARROW_COLOR : strategy.color}
+              strokeOpacity={isBest ? 1 : 0.64}
             />
             <text
-              x="12"
-              y="22"
-              fill="#f6fbf4"
-              fontSize="15"
-              fontWeight="800"
-              style={{ letterSpacing: 0 }}
+              x="10"
+              y="21"
+              fill="#eef3e7"
+              fontFamily='"Lucida Console", "Courier New", monospace'
+              fontSize="12"
+              fontWeight="700"
             >
               {isBest ? "BEST: " : ""}
-              {pathOption.label}
+              {strategy.label}
             </text>
           </g>
         );

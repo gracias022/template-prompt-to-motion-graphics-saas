@@ -1,8 +1,10 @@
 import type {
   EnemyUnit,
   FriendlyUnit,
+  MapNode,
   MoveStep,
   Point,
+  StrategyId,
   StrategyPath,
   UnitId,
 } from "./types";
@@ -10,466 +12,455 @@ import type {
 export const BATTLEFIELD_WIDTH = 1920;
 export const BATTLEFIELD_HEIGHT = 1080;
 export const BATTLEFIELD_FPS = 30;
-export const MOVE_DURATION_IN_FRAMES = 100;
-export const TOTAL_MOVES = 5;
-export const BATTLEFIELD_DURATION_IN_FRAMES =
-  MOVE_DURATION_IN_FRAMES * TOTAL_MOVES;
 
-export const MAP_WIDTH = 1180;
-export const MAP_HEIGHT = 760;
+export const OBJECTIVE_TYPING_FRAMES = 88;
+export const PATH_GENERATION_FRAMES = 72;
+export const UNIT_FOCUS_FRAMES = 60;
+export const OVERVIEW_RETURN_FRAMES = 50;
+export const HOVER_TOOLTIP_FRAMES = 62;
+export const PINNED_TOOLTIP_FRAMES = 70;
+export const MOVE_STEP_FRAMES = 72;
+
+export const BATTLEFIELD_DURATION_IN_FRAMES =
+  OBJECTIVE_TYPING_FRAMES +
+  PATH_GENERATION_FRAMES +
+  UNIT_FOCUS_FRAMES +
+  OVERVIEW_RETURN_FRAMES +
+  HOVER_TOOLTIP_FRAMES +
+  PINNED_TOOLTIP_FRAMES +
+  MOVE_STEP_FRAMES * 4;
+
+export const MAP_WIDTH = 1160;
+export const MAP_HEIGHT = 650;
 
 export const OBJECTIVE_TEXT =
-  "Secure Hill 482 and keep the western supply road open";
+  "Split units across all possible paths, approach safely, coordinate attacks against enemy-held points, and wait for all friendly units before entering the critical point.";
 
-export const OBJECTIVE_POSITION: Point = { x: 982, y: 176 };
+export const END_TARGET: Point = { x: 950, y: 348 };
+
+export const UNIT_ORDER: UnitId[] = ["331", "332", "333"];
+
+const p = (x: number, y: number): Point => ({ x, y });
+
+const route = (...points: Point[]): Point[] => points;
 
 export const FRIENDLY_UNITS: FriendlyUnit[] = [
-  { id: "alpha", label: "A1", callSign: "Alpha", role: "Infantry" },
-  { id: "bravo", label: "B2", callSign: "Bravo", role: "Armor" },
-  { id: "charlie", label: "C3", callSign: "Charlie", role: "Recon" },
+  {
+    id: "331",
+    label: "331",
+    type: "Infantry Section",
+    role: "Assault / main push",
+    size: 10,
+  },
+  {
+    id: "332",
+    label: "332",
+    type: "Recon Element",
+    role: "Alternate path coverage",
+    size: 8,
+  },
+  {
+    id: "333",
+    label: "333",
+    type: "Infantry Section",
+    role: "Assault support",
+    size: 10,
+  },
 ];
 
 export const ENEMY_UNITS: EnemyUnit[] = [
   {
-    id: "red-one",
-    label: "R1",
-    position: { x: 752, y: 304 },
-    strength: "AT team",
-    range: 116,
+    id: "red-b1",
+    label: "E1",
+    position: p(385, 178),
+    type: "Infantry Element",
+    role: "Blocks northern approach",
+    size: 6,
   },
   {
-    id: "red-two",
-    label: "R2",
-    position: { x: 854, y: 548 },
-    strength: "Mechanized",
-    range: 138,
+    id: "red-b2",
+    label: "E2",
+    position: p(434, 206),
+    type: "Support Element",
+    role: "Reinforces contested point",
+    size: 4,
   },
   {
-    id: "red-three",
-    label: "R3",
-    position: { x: 1012, y: 394 },
-    strength: "Reserve",
-    range: 104,
+    id: "red-i1",
+    label: "E3",
+    position: p(682, 510),
+    type: "Infantry Element",
+    role: "Covers alternate route",
+    size: 5,
+  },
+  {
+    id: "red-i2",
+    label: "E4",
+    position: p(730, 536),
+    type: "Recon Screen",
+    role: "Early contact risk",
+    size: 3,
   },
 ];
 
-const position = (x: number, y: number): Point => ({ x, y });
+export const MAP_NODES: MapNode[] = [
+  { id: "a", label: "1-A", position: p(160, 390), variant: "neutral" },
+  { id: "b", label: "1-B", position: p(390, 204), variant: "enemy" },
+  { id: "c", label: "1-C", position: p(374, 526), variant: "neutral" },
+  { id: "d", label: "1-D", position: p(650, 190), variant: "neutral" },
+  { id: "i", label: "1-I", position: p(670, 540), variant: "enemy" },
+  { id: "e", label: "1-E", position: END_TARGET, variant: "critical" },
+];
 
-const path = (...points: Point[]): Point[] => points;
-
-const positionsByMove: Record<number, Record<UnitId, Point>> = {
-  0: {
-    alpha: position(188, 590),
-    bravo: position(214, 392),
-    charlie: position(360, 690),
-  },
-  1: {
-    alpha: position(326, 548),
-    bravo: position(352, 346),
-    charlie: position(504, 640),
-  },
-  2: {
-    alpha: position(456, 500),
-    bravo: position(486, 310),
-    charlie: position(628, 584),
-  },
-  3: {
-    alpha: position(608, 454),
-    bravo: position(612, 282),
-    charlie: position(746, 520),
-  },
-  4: {
-    alpha: position(738, 390),
-    bravo: position(738, 246),
-    charlie: position(856, 456),
-  },
+const initialPositions: Record<UnitId, Point> = {
+  "331": p(172, 410),
+  "332": p(660, 575),
+  "333": p(146, 456),
 };
 
-const strategy = (
-  id: StrategyPath["id"],
-  label: string,
-  color: string,
+const afterFirstPush: Record<UnitId, Point> = {
+  "331": p(356, 218),
+  "332": initialPositions["332"],
+  "333": p(384, 250),
+};
+
+const afterSecondPush: Record<UnitId, Point> = {
+  "331": p(640, 192),
+  "332": initialPositions["332"],
+  "333": p(660, 232),
+};
+
+const afterSynchronizedEntry: Record<UnitId, Point> = {
+  "331": p(920, 326),
+  "332": p(912, 390),
+  "333": p(968, 354),
+};
+
+const finalSecurePositions: Record<UnitId, Point> = {
+  "331": p(928, 316),
+  "332": p(936, 386),
+  "333": p(978, 350),
+};
+
+const strategyCopy = (
+  id: StrategyId,
   unitPaths: Record<UnitId, Point[]>,
-  tooltipTitle: string,
-  tooltipBody: string,
-): StrategyPath => ({
-  id,
-  label,
-  color,
-  unitPaths,
-  tooltipTitle,
-  tooltipBody,
-});
+  tooltipAnchor: Point,
+  tooltipOffset: Point,
+): StrategyPath => {
+  const strategyDetails: Record<
+    StrategyId,
+    Pick<
+      StrategyPath,
+      "label" | "color" | "dash" | "tooltipTitle" | "tooltipBody"
+    >
+  > = {
+    maneuver: {
+      label: "Maneuver",
+      color: "#9bdc7e",
+      dash: "10 10",
+      tooltipTitle: "Maneuver Planner Reasoning",
+      tooltipBody:
+        "Uniform rule for every friendly unit: take the fastest legal progress toward 1-E. The model accepts more exposure near enemy-held points because tempo and route coverage are prioritized.",
+    },
+    force: {
+      label: "Force",
+      color: "#d6a23a",
+      dash: "3 9",
+      tooltipTitle: "Force Planner Reasoning",
+      tooltipBody:
+        "Uniform rule for every friendly unit: keep the assault group mutually supporting while pushing enemy-held terrain. No unit enters the end target unsupported.",
+    },
+    coordination: {
+      label: "Coordination",
+      color: "#6e9eb0",
+      dash: "12 8",
+      tooltipTitle: "Coordination Planner Reasoning",
+      tooltipBody:
+        "Uniform rule for every friendly unit: preserve split-path coverage and synchronize the critical entry. The final move waits until all blue elements can converge on 1-E together.",
+    },
+  };
+
+  return {
+    id,
+    ...strategyDetails[id],
+    unitPaths,
+    tooltipAnchor,
+    tooltipOffset,
+  };
+};
+
+const initialRoutes: StrategyPath[] = [
+  strategyCopy(
+    "maneuver",
+    {
+      "331": route(initialPositions["331"], p(320, 316), p(646, 190), END_TARGET),
+      "332": route(initialPositions["332"], p(742, 480), p(846, 406), END_TARGET),
+      "333": route(initialPositions["333"], p(346, 318), p(660, 232), END_TARGET),
+    },
+    p(474, 240),
+    p(112, -132),
+  ),
+  strategyCopy(
+    "force",
+    {
+      "331": route(initialPositions["331"], p(356, 218), p(650, 190), END_TARGET),
+      "332": route(initialPositions["332"], p(724, 505), p(820, 430), END_TARGET),
+      "333": route(initialPositions["333"], p(384, 250), p(662, 230), END_TARGET),
+    },
+    p(390, 262),
+    p(118, -112),
+  ),
+  strategyCopy(
+    "coordination",
+    {
+      "331": route(initialPositions["331"], p(318, 488), p(668, 540), END_TARGET),
+      "332": route(initialPositions["332"], p(720, 534), p(838, 472), END_TARGET),
+      "333": route(initialPositions["333"], p(344, 540), p(684, 536), END_TARGET),
+    },
+    p(530, 536),
+    p(102, -176),
+  ),
+];
+
+const secondRoutes: StrategyPath[] = [
+  strategyCopy(
+    "maneuver",
+    {
+      "331": route(afterFirstPush["331"], p(510, 168), p(708, 198), END_TARGET),
+      "332": route(afterFirstPush["332"], p(808, 440), p(882, 392), END_TARGET),
+      "333": route(afterFirstPush["333"], p(530, 220), p(730, 260), END_TARGET),
+    },
+    p(584, 182),
+    p(106, -118),
+  ),
+  strategyCopy(
+    "force",
+    {
+      "331": route(afterFirstPush["331"], p(526, 242), p(748, 282), END_TARGET),
+      "332": route(afterFirstPush["332"], p(806, 490), p(894, 426), END_TARGET),
+      "333": route(afterFirstPush["333"], p(546, 276), p(760, 306), END_TARGET),
+    },
+    p(644, 278),
+    p(112, -126),
+  ),
+  strategyCopy(
+    "coordination",
+    {
+      "331": route(afterFirstPush["331"], p(640, 192), p(790, 252), END_TARGET),
+      "332": route(afterFirstPush["332"], p(792, 455), p(870, 420), END_TARGET),
+      "333": route(afterFirstPush["333"], p(660, 232), p(802, 278), END_TARGET),
+    },
+    p(732, 404),
+    p(-440, -164),
+  ),
+];
+
+const thirdRoutes: StrategyPath[] = [
+  strategyCopy(
+    "maneuver",
+    {
+      "331": route(afterSecondPush["331"], p(760, 242), p(878, 304), END_TARGET),
+      "332": route(afterSecondPush["332"], p(846, 436), p(910, 382), END_TARGET),
+      "333": route(afterSecondPush["333"], p(790, 282), p(900, 324), END_TARGET),
+    },
+    p(802, 284),
+    p(-422, -112),
+  ),
+  strategyCopy(
+    "force",
+    {
+      "331": route(afterSecondPush["331"], p(780, 312), p(892, 336), END_TARGET),
+      "332": route(afterSecondPush["332"], p(846, 462), p(920, 392), END_TARGET),
+      "333": route(afterSecondPush["333"], p(802, 332), p(916, 352), END_TARGET),
+    },
+    p(854, 350),
+    p(-438, -132),
+  ),
+  strategyCopy(
+    "coordination",
+    {
+      "331": route(afterSecondPush["331"], p(820, 274), p(920, 326), END_TARGET),
+      "332": route(afterSecondPush["332"], p(866, 430), p(912, 390), END_TARGET),
+      "333": route(afterSecondPush["333"], p(838, 300), p(968, 354), END_TARGET),
+    },
+    p(882, 364),
+    p(-462, -158),
+  ),
+];
+
+const finalRoutes: StrategyPath[] = [
+  strategyCopy(
+    "maneuver",
+    {
+      "331": route(afterSynchronizedEntry["331"], finalSecurePositions["331"], END_TARGET),
+      "332": route(afterSynchronizedEntry["332"], finalSecurePositions["332"], END_TARGET),
+      "333": route(afterSynchronizedEntry["333"], finalSecurePositions["333"], END_TARGET),
+    },
+    p(930, 326),
+    p(-452, -156),
+  ),
+  strategyCopy(
+    "force",
+    {
+      "331": route(afterSynchronizedEntry["331"], p(938, 342), END_TARGET),
+      "332": route(afterSynchronizedEntry["332"], p(936, 372), END_TARGET),
+      "333": route(afterSynchronizedEntry["333"], p(958, 346), END_TARGET),
+    },
+    p(940, 352),
+    p(-452, -120),
+  ),
+  strategyCopy(
+    "coordination",
+    {
+      "331": route(afterSynchronizedEntry["331"], p(910, 344), END_TARGET),
+      "332": route(afterSynchronizedEntry["332"], p(922, 374), END_TARGET),
+      "333": route(afterSynchronizedEntry["333"], p(970, 366), END_TARGET),
+    },
+    p(936, 382),
+    p(-452, -108),
+  ),
+];
 
 export const MOVES: MoveStep[] = [
   {
     index: 0,
     label: "Move 1",
-    tacticalState: "Objective accepted",
-    previousPositions: positionsByMove[0],
-    unitPositions: positionsByMove[0],
-    bestStrategyId: null,
-    tooltipStrategyId: null,
-    tooltipAnchor: position(470, 242),
-    paths: [],
+    stepLabel: "Initial State",
+    tacticalState: "Objective entry",
+    startPositions: initialPositions,
+    endPositions: initialPositions,
+    bestStrategyId: "force",
+    paths: initialRoutes,
+    actions: [
+      { unitId: "331", action: "READY", from: "1-A", to: "1-A" },
+      { unitId: "332", action: "READY", from: "1-I", to: "1-I" },
+      { unitId: "333", action: "READY", from: "1-A", to: "1-A" },
+    ],
     reasoning: {
       headline: "Mission objective parsed",
-      bestMove: "Hold current formation while the simulator scores options.",
+      chosenMove:
+        "Extract coordinated critical-entry strategy before committing movement.",
       explanation:
-        "The agent identifies Hill 482 as the decisive terrain and preserves a three-unit formation before committing movement. Enemy anti-armor coverage is tagged as the dominant risk.",
+        "The operator intent is converted into a strategy profile that favors split-path coverage, safe approach, and synchronized entry into the critical point.",
       factors: [
-        "Objective distance and road access established",
-        "Friendly formation spacing remains mutually supporting",
-        "Red threat rings are loaded before path scoring",
+        "End target fixed at critical point 1-E",
+        "Enemy-held 1-B and 1-I loaded as contact risks",
+        "Friendly units preserved in a coordinated entry posture",
       ],
+      confidence: 68,
     },
   },
   {
     index: 1,
     label: "Move 2",
-    tacticalState: "Candidate paths revealed",
-    previousPositions: positionsByMove[0],
-    unitPositions: positionsByMove[1],
-    bestStrategyId: "flank",
-    tooltipStrategyId: "screen",
-    tooltipAnchor: position(474, 412),
-    paths: [
-      strategy(
-        "flank",
-        "Northern flank",
-        "#2dd4bf",
-        {
-          alpha: path(
-            position(188, 590),
-            position(254, 536),
-            position(326, 548),
-          ),
-          bravo: path(
-            position(214, 392),
-            position(282, 336),
-            position(352, 346),
-          ),
-          charlie: path(
-            position(360, 690),
-            position(430, 636),
-            position(504, 640),
-          ),
-        },
-        "Northern flank",
-        "Uniform rule: every friendly unit shifts along the western ridge first, keeping blue units outside the strongest red coverage while reducing distance to Hill 482.",
-      ),
-      strategy(
-        "screen",
-        "Center screen",
-        "#f5b942",
-        {
-          alpha: path(
-            position(188, 590),
-            position(302, 574),
-            position(426, 556),
-          ),
-          bravo: path(
-            position(214, 392),
-            position(326, 390),
-            position(446, 372),
-          ),
-          charlie: path(
-            position(360, 690),
-            position(474, 680),
-            position(596, 664),
-          ),
-        },
-        "Center screen",
-        "Uniform rule: all units advance on a shallow center line, maximizing speed but briefly exposing the formation to overlapping enemy observation arcs.",
-      ),
-      strategy(
-        "breach",
-        "Direct breach",
-        "#7bd85b",
-        {
-          alpha: path(position(188, 590), position(340, 516)),
-          bravo: path(position(214, 392), position(372, 318)),
-          charlie: path(position(360, 690), position(526, 596)),
-        },
-        "Direct breach",
-        "Uniform rule: each unit takes the shortest available lane toward the objective. The score improves tempo but accepts higher exposure from red mechanized coverage.",
-      ),
+    stepLabel: "Generate Routes",
+    tacticalState: "Planner routes generated",
+    startPositions: initialPositions,
+    endPositions: afterFirstPush,
+    bestStrategyId: "force",
+    paths: initialRoutes,
+    actions: [
+      { unitId: "331", action: "MOVE", from: "1-A", to: "1-B" },
+      { unitId: "332", action: "WAIT", from: "1-I", to: "1-I" },
+      { unitId: "333", action: "MOVE", from: "1-A", to: "1-B" },
     ],
     reasoning: {
-      headline: "Best next step: Northern flank",
-      bestMove:
-        "Shift Alpha, Bravo, and Charlie northeast along the western ridge.",
+      headline: "Best next step: Coordinated force entry",
+      chosenMove:
+        "Move 331 and 333 into the northern contact lane while 332 holds the alternate approach.",
       explanation:
-        "The flank path gives up a small amount of speed to keep every friendly unit outside the anti-armor team's highest-risk arc while preserving line-of-sight between the units.",
+        "The force route best matches the extracted profile because it keeps the main assault paired and prevents 332 from entering 1-E alone. The route still preserves split-path coverage for the final convergence.",
       factors: [
-        "Lowest projected casualties across the next two timesteps",
-        "Maintains a support triangle between friendly units",
-        "Keeps the supply road screened by Charlie",
+        "Best alignment with full-force entry",
+        "Keeps assault elements mutually supporting at 1-B",
+        "Preserves 332 as the second entry vector",
       ],
+      confidence: 84,
     },
   },
   {
     index: 2,
     label: "Move 3",
-    tacticalState: "Risk model updated",
-    previousPositions: positionsByMove[1],
-    unitPositions: positionsByMove[2],
-    bestStrategyId: "screen",
-    tooltipStrategyId: "flank",
-    tooltipAnchor: position(562, 322),
-    paths: [
-      strategy(
-        "flank",
-        "Northern flank",
-        "#2dd4bf",
-        {
-          alpha: path(
-            position(326, 548),
-            position(394, 488),
-            position(474, 466),
-          ),
-          bravo: path(
-            position(352, 346),
-            position(420, 284),
-            position(512, 270),
-          ),
-          charlie: path(
-            position(504, 640),
-            position(570, 588),
-            position(654, 562),
-          ),
-        },
-        "Northern flank",
-        "Uniform rule: the formation stays ridge-side and compresses north. This avoids the mechanized unit but delays Charlie's road coverage.",
-      ),
-      strategy(
-        "screen",
-        "Center screen",
-        "#f5b942",
-        {
-          alpha: path(
-            position(326, 548),
-            position(392, 520),
-            position(456, 500),
-          ),
-          bravo: path(
-            position(352, 346),
-            position(422, 326),
-            position(486, 310),
-          ),
-          charlie: path(
-            position(504, 640),
-            position(566, 610),
-            position(628, 584),
-          ),
-        },
-        "Center screen",
-        "Uniform rule: all units advance on staggered center lanes, which lets Bravo screen the threat while Alpha and Charlie keep objective pressure.",
-      ),
-      strategy(
-        "breach",
-        "Direct breach",
-        "#7bd85b",
-        {
-          alpha: path(position(326, 548), position(522, 476)),
-          bravo: path(position(352, 346), position(550, 288)),
-          charlie: path(position(504, 640), position(704, 560)),
-        },
-        "Direct breach",
-        "Uniform rule: the formation accelerates in parallel. The model marks this as fast but brittle because units would cross red-two's range at the same time.",
-      ),
+    stepLabel: "Replan After Contact",
+    tacticalState: "Paths updated after first move",
+    startPositions: afterFirstPush,
+    endPositions: afterSecondPush,
+    bestStrategyId: "coordination",
+    paths: secondRoutes,
+    actions: [
+      { unitId: "331", action: "MOVE", from: "1-B", to: "1-D" },
+      { unitId: "332", action: "WAIT", from: "1-I", to: "1-I" },
+      { unitId: "333", action: "MOVE", from: "1-B", to: "1-D" },
     ],
     reasoning: {
-      headline: "Best next step: Center screen",
-      bestMove:
-        "Advance on staggered lanes so Bravo absorbs risk while Alpha and Charlie keep pressure.",
+      headline: "Best next step: Coordinate lanes",
+      chosenMove:
+        "Advance the main pair toward 1-D while 332 continues to hold at 1-I.",
       explanation:
-        "The updated score shows the northern flank becoming too slow. A center screen keeps the formation balanced and uses Bravo's armor to reduce exposure for the softer units.",
+        "Once contact is absorbed near 1-B, the simulator shifts from raw force to coordination. The selected move reduces the chance that the northern pair reaches 1-E before 332 can support the entry.",
       factors: [
-        "Improves arrival time by one timestep",
-        "Avoids simultaneous exposure to red-one and red-two",
-        "Keeps Charlie close enough to monitor the road",
+        "Shortens final convergence time for all units",
+        "Keeps 332 out of the critical point until support is ready",
+        "Maintains pressure without splitting the assault pair",
       ],
+      confidence: 88,
     },
   },
   {
     index: 3,
     label: "Move 4",
-    tacticalState: "Objective approach opened",
-    previousPositions: positionsByMove[2],
-    unitPositions: positionsByMove[3],
-    bestStrategyId: "breach",
-    tooltipStrategyId: "breach",
-    tooltipAnchor: position(732, 424),
-    paths: [
-      strategy(
-        "flank",
-        "Northern flank",
-        "#2dd4bf",
-        {
-          alpha: path(
-            position(456, 500),
-            position(524, 436),
-            position(604, 416),
-          ),
-          bravo: path(
-            position(486, 310),
-            position(554, 250),
-            position(640, 236),
-          ),
-          charlie: path(
-            position(628, 584),
-            position(690, 528),
-            position(768, 498),
-          ),
-        },
-        "Northern flank",
-        "Uniform rule: blue units keep outside the center threat rings, but this route leaves the objective flag uncontested for another timestep.",
-      ),
-      strategy(
-        "screen",
-        "Center screen",
-        "#f5b942",
-        {
-          alpha: path(
-            position(456, 500),
-            position(548, 474),
-            position(650, 444),
-          ),
-          bravo: path(
-            position(486, 310),
-            position(580, 308),
-            position(672, 292),
-          ),
-          charlie: path(
-            position(628, 584),
-            position(710, 558),
-            position(792, 534),
-          ),
-        },
-        "Center screen",
-        "Uniform rule: all units keep a measured line and trade tempo for stability. The model rates it safe but no longer decisive.",
-      ),
-      strategy(
-        "breach",
-        "Direct breach",
-        "#7bd85b",
-        {
-          alpha: path(
-            position(456, 500),
-            position(536, 474),
-            position(608, 454),
-          ),
-          bravo: path(
-            position(486, 310),
-            position(552, 294),
-            position(612, 282),
-          ),
-          charlie: path(
-            position(628, 584),
-            position(688, 548),
-            position(746, 520),
-          ),
-        },
-        "Direct breach",
-        "Uniform rule: every unit commits through the gap opened by Bravo's screen, converting the prior risk reduction into objective tempo.",
-      ),
+    stepLabel: "Synchronized Entry",
+    tacticalState: "Final entry window opens",
+    startPositions: afterSecondPush,
+    endPositions: afterSynchronizedEntry,
+    bestStrategyId: "coordination",
+    paths: thirdRoutes,
+    actions: [
+      { unitId: "331", action: "MOVE", from: "1-D", to: "1-E" },
+      { unitId: "332", action: "MOVE", from: "1-I", to: "1-E" },
+      { unitId: "333", action: "MOVE", from: "1-D", to: "1-E" },
     ],
     reasoning: {
-      headline: "Best next step: Direct breach",
-      bestMove:
-        "Commit through the center gap while red coverage is split across two axes.",
+      headline: "Best next step: Enter together",
+      chosenMove:
+        "Commit all friendly units into 1-E during the same timestep.",
       explanation:
-        "The breach is now the best move because prior positioning reduced overlapping fire. The simulator chooses tempo while enemy response time is lowest.",
+        "The coordinated route is now optimal because the arrival times match. The model rejects a staggered entry and chooses a synchronized force push to secure the endpoint.",
       factors: [
-        "Enemy arcs no longer overlap the full formation",
-        "Objective distance drops sharply for all units",
-        "Bravo remains between red-one and the softer units",
+        "All friendly units can reach 1-E together",
+        "Avoids unsupported entry into the critical point",
+        "Maximizes capture score while limiting exposure",
       ],
+      confidence: 92,
     },
   },
   {
     index: 4,
     label: "Move 5",
-    tacticalState: "Final next action selected",
-    previousPositions: positionsByMove[3],
-    unitPositions: positionsByMove[4],
-    bestStrategyId: "flank",
-    tooltipStrategyId: "flank",
-    tooltipAnchor: position(822, 294),
-    paths: [
-      strategy(
-        "flank",
-        "Northern flank",
-        "#2dd4bf",
-        {
-          alpha: path(
-            position(608, 454),
-            position(674, 406),
-            position(738, 390),
-          ),
-          bravo: path(
-            position(612, 282),
-            position(674, 248),
-            position(738, 246),
-          ),
-          charlie: path(
-            position(746, 520),
-            position(806, 476),
-            position(856, 456),
-          ),
-        },
-        "Northern flank",
-        "Uniform rule: the final step bends all units toward the flag while preserving spacing, giving Alpha the approach lane and Charlie the road-security lane.",
-      ),
-      strategy(
-        "screen",
-        "Center screen",
-        "#f5b942",
-        {
-          alpha: path(
-            position(608, 454),
-            position(720, 426),
-            position(820, 404),
-          ),
-          bravo: path(
-            position(612, 282),
-            position(718, 292),
-            position(810, 296),
-          ),
-          charlie: path(
-            position(746, 520),
-            position(832, 510),
-            position(928, 500),
-          ),
-        },
-        "Center screen",
-        "Uniform rule: all units hold a broad screen before the final objective step. It protects the road but misses the current opportunity window.",
-      ),
-      strategy(
-        "breach",
-        "Direct breach",
-        "#7bd85b",
-        {
-          alpha: path(position(608, 454), position(794, 360)),
-          bravo: path(position(612, 282), position(804, 218)),
-          charlie: path(position(746, 520), position(926, 420)),
-        },
-        "Direct breach",
-        "Uniform rule: every unit drives directly at the flag. The model rejects this because red-three can counterattack into an overextended Charlie.",
-      ),
+    stepLabel: "Secure Hill 482",
+    tacticalState: "Endpoint secured",
+    startPositions: afterSynchronizedEntry,
+    endPositions: finalSecurePositions,
+    bestStrategyId: "maneuver",
+    paths: finalRoutes,
+    actions: [
+      { unitId: "331", action: "SECURE", from: "1-E", to: "north edge" },
+      { unitId: "332", action: "SECURE", from: "1-E", to: "south edge" },
+      { unitId: "333", action: "SECURE", from: "1-E", to: "east edge" },
     ],
     reasoning: {
-      headline: "Best next step: Northern flank",
-      bestMove:
-        "Bend the formation toward Hill 482 and keep Charlie between red-two and the road.",
+      headline: "Best next step: Hold the endpoint",
+      chosenMove:
+        "Fan out just enough to secure Hill 482 while keeping every unit tied to 1-E.",
       explanation:
-        "The final recommendation balances capture probability with road security. A direct push reaches the flag slightly faster, but the flank keeps the route open and avoids overextending Charlie.",
+        "After capture, the simulator favors a short maneuver step that improves perimeter coverage without breaking the mutual-support constraint around the flag.",
       factors: [
-        "Highest combined objective and supply-route score",
-        "Keeps all friendly units in mutual support range",
-        "Preserves a follow-up lane around red-three",
+        "Critical point remains controlled by all friendly units",
+        "Perimeter spacing blocks immediate counterattack lanes",
+        "No unit drifts beyond support range",
       ],
+      confidence: 90,
     },
   },
 ];

@@ -1,7 +1,14 @@
+import type { FC } from "react";
 import { interpolate, spring, useVideoConfig } from "remotion";
 
 import { MAP_HEIGHT, MAP_WIDTH } from "../data";
-import type { MoveStep } from "../types";
+import type {
+  MoveStep,
+  StrategyId,
+  TooltipKind,
+  TooltipMode,
+  UnitId,
+} from "../types";
 import { PathsLayer } from "./PathsLayer";
 import { TooltipLayer } from "./TooltipLayer";
 import { UnitsLayer } from "./UnitsLayer";
@@ -9,33 +16,77 @@ import { UnitsLayer } from "./UnitsLayer";
 interface MapSceneProps {
   move: MoveStep;
   frame: number;
+  showPaths: boolean;
+  selectedUnitId: UnitId | null;
+  tooltipStrategyId: StrategyId | null;
+  tooltipMode: TooltipMode;
+  tooltipKind: TooltipKind;
+  animateMove: boolean;
+  isGenerating: boolean;
+  highlight?: boolean;
 }
 
-const terrainPatch = (
-  left: number,
-  top: number,
-  width: number,
-  height: number,
-  color: string,
-  radius: number,
-) => ({
-  position: "absolute" as const,
-  left,
-  top,
-  width,
-  height,
-  borderRadius: radius,
-  background: color,
-});
+const LegendStroke: FC<{
+  color: string;
+  label: string;
+  dash?: string;
+}> = ({ color, label, dash }) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      color: "#a7b09f",
+      font: '700 10px "Lucida Console", "Courier New", monospace',
+      textTransform: "uppercase",
+    }}
+  >
+    <svg width="34" height="10" viewBox="0 0 34 10">
+      <line
+        x1="0"
+        y1="5"
+        x2="34"
+        y2="5"
+        stroke={color}
+        strokeWidth="3"
+        strokeDasharray={dash}
+      />
+    </svg>
+    {label}
+  </div>
+);
 
-export const MapScene: React.FC<MapSceneProps> = ({ move, frame }) => {
+export const MapScene: FC<MapSceneProps> = ({
+  move,
+  frame,
+  showPaths,
+  selectedUnitId,
+  tooltipStrategyId,
+  tooltipMode,
+  tooltipKind,
+  animateMove,
+  isGenerating,
+  highlight = false,
+}) => {
   const { fps } = useVideoConfig();
   const entrance = spring({
     frame,
     fps,
     config: { damping: 22, stiffness: 120 },
   });
-  const pathLegendOpacity = interpolate(frame, [14, 34], [0, 1], {
+  const highlightGlow = highlight
+    ? interpolate(frame % 36, [0, 18, 35], [0.35, 0.9, 0.35], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      })
+    : 0;
+  const scanOpacity = isGenerating
+    ? interpolate(frame, [6, 16, 58, 70], [0, 1, 1, 0], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      })
+    : 0;
+  const scanY = interpolate(frame, [8, 66], [52, MAP_HEIGHT - 86], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -43,153 +94,222 @@ export const MapScene: React.FC<MapSceneProps> = ({ move, frame }) => {
   return (
     <div
       style={{
+        position: "relative",
         width: MAP_WIDTH,
-        transform: `translateY(${interpolate(entrance, [0, 1], [18, 0])}px)`,
+        height: MAP_HEIGHT,
+        overflow: "hidden",
+        background: "#1f2a25",
+        border: "1px solid #687466",
+        boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.32), 0 0 ${28 * highlightGlow}px rgba(214,162,58,${highlightGlow})`,
+        transform: `translateY(${interpolate(entrance, [0, 1], [16, 0])}px)`,
         opacity: entrance,
       }}
     >
       <div
         style={{
-          height: 54,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 18px",
-          borderRadius: "8px 8px 0 0",
-          border: "1px solid rgba(220,233,216,0.18)",
-          borderBottom: "none",
-          background: "rgba(24, 29, 24, 0.92)",
+          position: "absolute",
+          left: 10,
+          top: 8,
+          zIndex: 34,
+          color: "rgba(216,222,207,0.46)",
+          font: '700 10px "Lucida Console", "Courier New", monospace',
+          textTransform: "uppercase",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            gap: 14,
-          }}
-        >
-          <div
-            style={{
-              color: "#f4f7ef",
-              fontSize: 23,
-              fontWeight: 900,
-            }}
-          >
-            Tactical Map
-          </div>
-          <div
-            style={{
-              color: "#aebca8",
-              fontSize: 16,
-              fontWeight: 700,
-            }}
-          >
-            {move.tacticalState}
-          </div>
-        </div>
-        <div
-          style={{
-            opacity: move.paths.length === 0 ? 0 : pathLegendOpacity,
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-          }}
-        >
-          {move.paths.map((pathOption) => (
-            <div
-              key={pathOption.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                color: "#dce9d8",
-                fontSize: 15,
-                fontWeight: 800,
-              }}
-            >
-              <div
-                style={{
-                  width: 22,
-                  height: 6,
-                  borderRadius: 999,
-                  background: pathOption.color,
-                  opacity: pathOption.id === move.bestStrategyId ? 1 : 0.55,
-                }}
-              />
-              {pathOption.label}
-            </div>
-          ))}
-        </div>
+        Tactical route overlay // not to scale
       </div>
+
       <div
         style={{
-          position: "relative",
-          width: MAP_WIDTH,
-          height: MAP_HEIGHT,
-          overflow: "hidden",
-          borderRadius: "0 0 8px 8px",
-          border: "1px solid rgba(220,233,216,0.18)",
-          background:
-            "linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px), #283025",
-          backgroundSize: "64px 64px, 64px 64px, auto",
-          boxShadow: "0 24px 48px rgba(0,0,0,0.28)",
+          position: "absolute",
+          right: 10,
+          top: 8,
+          zIndex: 60,
+          display: "grid",
+          gridTemplateColumns: "auto auto auto",
+          alignItems: "center",
+          border: "1px solid #687466",
+          background: "rgba(17,22,18,0.94)",
+          fontFamily: '"Lucida Console", "Courier New", monospace',
         }}
       >
-        <div
-          style={terrainPatch(92, 72, 286, 112, "rgba(116, 145, 83, 0.34)", 62)}
-        />
-        <div
-          style={terrainPatch(
-            656,
-            122,
-            356,
-            104,
-            "rgba(108, 118, 98, 0.42)",
-            54,
-          )}
-        />
-        <div
-          style={terrainPatch(116, 606, 552, 62, "rgba(92, 105, 95, 0.5)", 20)}
-        />
+        <button
+          type="button"
+          style={{
+            width: 34,
+            height: 28,
+            border: 0,
+            borderRight: "1px solid #465147",
+            color: "#d6a23a",
+            background: "transparent",
+            font: '700 14px "Lucida Console", "Courier New", monospace',
+            padding: 0,
+          }}
+        >
+          &lt;
+        </button>
         <div
           style={{
-            position: "absolute",
-            left: 0,
-            top: 614,
-            width: MAP_WIDTH,
-            height: 46,
-            background: "rgba(92, 94, 74, 0.42)",
-            transform: "rotate(-5deg)",
-            transformOrigin: "left center",
+            minWidth: 148,
+            padding: "0 10px",
+            color: "#d8decf",
+            font: '700 10px/28px "Lucida Console", "Courier New", monospace',
+            textAlign: "center",
+            textTransform: "uppercase",
           }}
-        />
-        <div
+        >
+          Decision Step {String(move.index + 1).padStart(2, "0")} / 05
+        </div>
+        <button
+          type="button"
           style={{
-            position: "absolute",
-            left: 506,
-            top: -74,
-            width: 70,
-            height: MAP_HEIGHT + 180,
-            background: "rgba(84, 103, 107, 0.38)",
-            transform: "rotate(18deg)",
-            transformOrigin: "top center",
+            width: 34,
+            height: 28,
+            border: 0,
+            borderLeft: "1px solid #465147",
+            color: "#d6a23a",
+            background: "transparent",
+            font: '700 14px "Lucida Console", "Courier New", monospace',
+            padding: 0,
           }}
+        >
+          &gt;
+        </button>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          right: 10,
+          top: 43,
+          zIndex: 60,
+          maxWidth: 354,
+          padding: "7px 9px",
+          border: "1px solid #465147",
+          color: "#a7b09f",
+          background: "rgba(17,22,18,0.88)",
+          font: '700 10px/1.35 "Lucida Console", "Courier New", monospace',
+          textTransform: "uppercase",
+        }}
+      >
+        Current model next-step output: {move.reasoning.chosenMove}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: 10,
+          bottom: 10,
+          zIndex: 70,
+          display: "grid",
+          gridTemplateColumns: "30px 30px",
+          border: "1px solid #687466",
+          background: "rgba(17,22,18,0.94)",
+          boxShadow: "5px 5px 0 rgba(0,0,0,0.32)",
+        }}
+      >
+        {["+", "-"].map((label) => (
+          <button
+            key={label}
+            type="button"
+            style={{
+              width: 30,
+              height: 30,
+              padding: 0,
+              border: 0,
+              borderRight: label === "+" ? "1px solid #465147" : 0,
+              color: "#d6a23a",
+              background: "transparent",
+              font: '700 16px "Lucida Console", "Courier New", monospace',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(rgba(143,179,106,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(143,179,106,0.09) 1px, transparent 1px)",
+          backgroundSize: "32px 32px, 32px 32px",
+          mixBlendMode: "screen",
+          opacity: 0.84,
+          zIndex: 0,
+        }}
+      />
+
+      <svg
+        width={MAP_WIDTH}
+        height={MAP_HEIGHT}
+        viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+        style={{ position: "absolute", inset: 0, zIndex: 1 }}
+      >
+        <path
+          d="M78 332 C98 238, 206 198, 314 154 C428 108, 508 86, 632 112 C770 140, 892 198, 982 302 C1058 392, 1010 516, 884 580 C756 646, 572 662, 426 628 C270 592, 112 506, 78 332 Z"
+          fill="#6f7f4b"
+          stroke="#93885a"
+          strokeWidth="2"
+          opacity="0.96"
         />
-        <div
-          style={{
-            position: "absolute",
-            left: 686,
-            top: 76,
-            width: 356,
-            height: 286,
-            border: "2px dashed rgba(246, 208, 77, 0.24)",
-            borderRadius: 24,
-            background: "rgba(246, 208, 77, 0.035)",
-          }}
-        />
-        <PathsLayer move={move} frame={frame} />
-        <UnitsLayer move={move} frame={frame} />
-        <TooltipLayer move={move} frame={frame} />
+      </svg>
+
+      <PathsLayer
+        move={move}
+        frame={frame}
+        selectedUnitId={selectedUnitId}
+        showPaths={showPaths}
+      />
+      <UnitsLayer
+        move={move}
+        frame={frame}
+        selectedUnitId={selectedUnitId}
+        animateMove={animateMove}
+      />
+      <TooltipLayer
+        move={move}
+        frame={frame}
+        tooltipStrategyId={tooltipStrategyId}
+        tooltipMode={tooltipMode}
+        tooltipKind={tooltipKind}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: scanY,
+          width: "100%",
+          height: 3,
+          opacity: scanOpacity,
+          background:
+            "linear-gradient(90deg, transparent, rgba(214,162,58,0.95), transparent)",
+          boxShadow: "0 0 18px rgba(214,162,58,0.7)",
+          zIndex: 75,
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          left: 82,
+          right: 10,
+          bottom: 10,
+          zIndex: 20,
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: "6px 12px",
+          padding: 9,
+          background: "rgba(17,22,18,0.90)",
+          border: "1px solid #465147",
+        }}
+      >
+        <LegendStroke color="#9bdc7e" label="Maneuver planner path" dash="10 10" />
+        <LegendStroke color="#8fb36a" label="Force planner path" dash="3 9" />
+        <LegendStroke color="#6e9eb0" label="Coordination planner path" dash="12 8" />
+        <LegendStroke color="#d6a23a" label="Tactical decision path" />
       </div>
     </div>
   );
