@@ -4,7 +4,7 @@ import {
   SKILL_NAMES,
   type SkillName,
 } from "@/skills";
-import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject, streamText } from "ai";
 import { z } from "zod";
 
@@ -141,7 +141,7 @@ If the user has made manual edits, preserve them unless explicitly asked to chan
 `;
 
 // Schema for follow-up edit responses
-// Note: Using a flat object schema because OpenAI doesn't support discriminated unions
+// Note: Using a flat object schema keeps the response compatible across providers
 const FollowUpResponseSchema = z.object({
   type: z
     .enum(["edit", "full"])
@@ -297,7 +297,7 @@ interface GenerateResponse {
 export async function POST(req: Request) {
   const {
     prompt,
-    model = "gpt-5.2",
+    model = "gemini-2.5-flash",
     currentCode,
     conversationHistory = [],
     isFollowUp = false,
@@ -307,13 +307,14 @@ export async function POST(req: Request) {
     frameImages,
   }: GenerateRequest = await req.json();
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey =
+    process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
   if (!apiKey) {
     return new Response(
       JSON.stringify({
         error:
-          'The environment variable "OPENAI_API_KEY" is not set. Add it to your .env file and try again.',
+          'The environment variable "GEMINI_API_KEY" is not set. Add it to your .env file and try again.',
       }),
       {
         status: 400,
@@ -322,16 +323,17 @@ export async function POST(req: Request) {
     );
   }
 
-  // Parse model ID - format can be "model-name" or "model-name:reasoning_effort"
-  const [modelName, reasoningEffort] = model.split(":");
+  const resolvedModel = model.startsWith("gemini-")
+    ? model
+    : "gemini-2.5-flash";
 
-  const openai = createOpenAI({ apiKey });
+  const google = createGoogleGenerativeAI({ apiKey });
 
   // Validate the prompt first (skip for follow-ups with existing code)
   if (!isFollowUp) {
     try {
       const validationResult = await generateObject({
-        model: openai("gpt-5.2"),
+        model: google("gemini-2.5-flash"),
         system: VALIDATION_PROMPT,
         prompt: `User prompt: "${prompt}"`,
         schema: z.object({ valid: z.boolean() }),
@@ -357,7 +359,7 @@ export async function POST(req: Request) {
   let detectedSkills: SkillName[] = [];
   try {
     const skillResult = await generateObject({
-      model: openai("gpt-5.2"),
+      model: google("gemini-2.5-flash"),
       system: SKILL_DETECTION_PROMPT,
       prompt: `User prompt: "${prompt}"`,
       schema: z.object({
@@ -480,7 +482,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
         "Follow-up edit with prompt:",
         prompt,
         "model:",
-        modelName,
+        resolvedModel,
         "skills:",
         detectedSkills.length > 0 ? detectedSkills.join(", ") : "general",
         frameImages && frameImages.length > 0
@@ -510,7 +512,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
       ];
 
       const editResult = await generateObject({
-        model: openai(modelName),
+        model: google(resolvedModel),
         system: FOLLOW_UP_SYSTEM_PROMPT,
         messages: editMessages,
         schema: FollowUpResponseSchema,
@@ -564,7 +566,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
           skills: detectedSkills,
           editType,
           edits: appliedEdits,
-          model: modelName,
+          model: resolvedModel,
         },
       };
 
@@ -613,26 +615,18 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
     ];
 
     const result = streamText({
-      model: openai(modelName),
+      model: google(resolvedModel),
       system: enhancedSystemPrompt,
       messages: initialMessages,
-      ...(reasoningEffort && {
-        providerOptions: {
-          openai: {
-            reasoningEffort: reasoningEffort,
-          },
-        },
-      }),
     });
 
     console.log(
       "Generating React component with prompt:",
       prompt,
       "model:",
-      modelName,
+      resolvedModel,
       "skills:",
       detectedSkills.length > 0 ? detectedSkills.join(", ") : "general",
-      reasoningEffort ? `reasoning_effort: ${reasoningEffort}` : "",
       hasImages ? `(with ${frameImages.length} image(s))` : "",
     );
 
@@ -678,7 +672,7 @@ Analyze the request and decide: use targeted edits (type: "edit") for small chan
     console.error("Error generating code:", error);
     return new Response(
       JSON.stringify({
-        error: "Something went wrong while trying to reach OpenAI APIs.",
+        error: "Something went wrong while trying to reach Gemini APIs.",
       }),
       { status: 500, headers: { "Content-Type": "application/json" } },
     );
