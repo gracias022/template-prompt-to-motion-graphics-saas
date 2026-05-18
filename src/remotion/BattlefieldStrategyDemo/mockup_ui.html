@@ -1,0 +1,1456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reasoning UI Mockup</title>
+  <style>
+    :root {
+      --bg: #1d241f;
+      --panel: #2a322c;
+      --panel-2: #222a25;
+      --panel-3: #323b34;
+      --line: #687466;
+      --line-dim: #465147;
+      --text: #d8decf;
+      --muted: #a7b09f;
+      --green: #8fb36a;
+      --green-dim: #5f7d4b;
+      --amber: #d6a23a;
+      --red: #b25a43;
+      --blue: #6e9eb0;
+      --black: #111612;
+      --white: #eef3e7;
+      --font-ui: "Lucida Console", "Courier New", monospace;
+      --font-body: "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--font-body);
+      background:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        var(--bg);
+      background-size: 18px 18px;
+    }
+
+    .shell {
+      width: min(1500px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 12px 0 24px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: stretch;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+    }
+
+    .topbar-main {
+      padding: 10px 12px;
+      border-left: 5px solid var(--green);
+    }
+
+    .system-label {
+      font: 700 11px var(--font-ui);
+      letter-spacing: 0.12em;
+      color: var(--amber);
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    h1, h2, h3 { margin: 0; font-family: var(--font-ui); text-transform: uppercase; }
+    h1 { font-size: clamp(18px, 2vw, 26px); letter-spacing: 0.05em; }
+    h2 { font-size: 15px; letter-spacing: 0.06em; }
+    h3 { font-size: 13px; letter-spacing: 0.05em; }
+
+    .topbar-meta {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      border-left: 1px solid var(--line-dim);
+    }
+
+    .meta-cell {
+      min-width: 112px;
+      padding: 9px 11px;
+      border-left: 1px solid var(--line-dim);
+      font-family: var(--font-ui);
+    }
+
+    .meta-cell span {
+      display: block;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .meta-cell strong {
+      color: var(--white);
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .panel, .workspace, .summary-card, .map-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.32);
+    }
+
+    .panel { position: sticky; top: 10px; }
+
+    .panel-header, .workspace-header, .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--black);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-body, .workspace-body, .summary-body { padding: 10px; }
+
+    .help-text {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 7px;
+      border: 1px solid var(--green-dim);
+      color: var(--green);
+      background: rgba(143,179,106,0.08);
+      font: 700 10px var(--font-ui);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+    }
+
+    .status.amber { color: var(--amber); border-color: rgba(214,162,58,0.55); background: rgba(214,162,58,0.08); }
+    .status.amber::before { background: var(--amber); }
+    .status.red { color: #d9816c; border-color: rgba(178,90,67,0.7); background: rgba(178,90,67,0.10); }
+    .status.red::before { background: var(--red); }
+
+    .form-stack { display: grid; gap: 9px; }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: var(--muted);
+      font: 700 11px var(--font-ui);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    textarea, select {
+      width: 100%;
+      border: 1px solid var(--line-dim);
+      border-radius: 0;
+      padding: 8px;
+      background: #18201b;
+      color: var(--text);
+      font: 13px/1.35 var(--font-ui);
+      outline: none;
+    }
+
+    textarea { min-height: 118px; resize: vertical; }
+
+    .button-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    button, .button {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid var(--green-dim);
+      border-radius: 0;
+      padding: 8px 10px;
+      color: var(--black);
+      background: var(--green);
+      font: 700 11px var(--font-ui);
+      text-transform: uppercase;
+      cursor: default;
+    }
+
+    .button.secondary {
+      color: var(--green);
+      background: transparent;
+    }
+
+    .strategy-card {
+      margin-top: 10px;
+      border: 1px solid var(--line-dim);
+      background: var(--panel-2);
+    }
+
+    .strategy-card .summary-body { display: grid; gap: 9px; }
+    .strategy-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      border: 1px solid var(--line-dim);
+      padding: 4px 6px;
+      color: var(--text);
+      background: #1a211c;
+      font: 700 10px var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .bars { display: grid; gap: 6px; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 116px 1fr 42px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font: 700 11px var(--font-ui);
+      text-transform: uppercase;
+    }
+    .bar-track { height: 10px; background: #121713; border: 1px solid var(--line-dim); }
+    .bar-fill { height: 100%; background: var(--green); }
+
+    .workspace { min-width: 0; }
+    .workspace { overflow: visible; }
+
+    .workspace-header { align-items: start; }
+    .workspace-header p { margin: 5px 0 0; color: var(--muted); line-height: 1.35; font-size: 13px; max-width: 760px; }
+
+    .workspace-body {
+      display: grid;
+      grid-template-columns: 1fr 330px;
+      gap: 10px;
+    }
+
+    .map-card {
+      min-height: 650px;
+      position: relative;
+      overflow: hidden;
+      background: #1f2a25;
+    }
+
+    .map-layer::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(143,179,106,0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(143,179,106,0.09) 1px, transparent 1px);
+      background-size: 32px 32px, 32px 32px;
+      mix-blend-mode: screen;
+      opacity: 0.84;
+    }
+
+    .map-card::before {
+      content: "TACTICAL ROUTE OVERLAY // NOT TO SCALE";
+      position: absolute;
+      left: 10px;
+      top: 8px;
+      color: rgba(216,222,207,0.46);
+      font: 700 10px var(--font-ui);
+      letter-spacing: 0.08em;
+      z-index: 3;
+    }
+
+    .step-nav {
+      position: absolute;
+      right: 10px;
+      top: 8px;
+      z-index: 60;
+      display: grid;
+      grid-template-columns: auto auto auto;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: rgba(17,22,18,0.94);
+      font-family: var(--font-ui);
+    }
+
+    .step-button {
+      width: 34px;
+      height: 28px;
+      border: 0;
+      border-right: 1px solid var(--line-dim);
+      color: var(--amber);
+      background: transparent;
+      font: 700 14px var(--font-ui);
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .step-button:last-child { border-left: 1px solid var(--line-dim); border-right: 0; }
+    .step-button:hover { background: rgba(214,162,58,0.13); }
+
+    .step-label {
+      min-width: 138px;
+      padding: 0 10px;
+      color: var(--text);
+      font: 700 10px/28px var(--font-ui);
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .step-caption {
+      position: absolute;
+      right: 10px;
+      top: 43px;
+      z-index: 60;
+      max-width: 330px;
+      padding: 7px 9px;
+      border: 1px solid var(--line-dim);
+      color: var(--muted);
+      background: rgba(17,22,18,0.88);
+      font: 700 10px/1.35 var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .results-trigger {
+      position: absolute;
+      right: 10px;
+      top: 100px;
+      z-index: 61;
+      min-width: 154px;
+      border-color: rgba(214,162,58,0.75);
+      color: var(--black);
+      background: var(--amber);
+      box-shadow: 5px 5px 0 rgba(0,0,0,0.34);
+      cursor: pointer;
+    }
+
+    .results-trigger[hidden] { display: none; }
+    .results-trigger:hover { filter: brightness(1.08); }
+
+    .map-viewport {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .map-viewport * {
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .map-viewport.dragging { cursor: grabbing; }
+
+    .map-layer {
+      position: absolute;
+      inset: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      z-index: 70;
+      display: grid;
+      grid-template-columns: 30px 30px;
+      border: 1px solid var(--line);
+      background: rgba(17,22,18,0.94);
+      box-shadow: 5px 5px 0 rgba(0,0,0,0.32);
+    }
+
+    .zoom-button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      border-right: 1px solid var(--line-dim);
+      color: var(--amber);
+      background: transparent;
+      font: 700 16px var(--font-ui);
+      cursor: pointer;
+    }
+
+    .zoom-button:last-child { border-right: 0; }
+    .zoom-button:hover { background: rgba(214,162,58,0.13); }
+
+    .map-card svg { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; }
+
+    .terrain-island {
+      fill: #6f7f4b;
+      stroke: #93885a;
+      stroke-width: 1.4;
+      opacity: 0.96;
+      pointer-events: none;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .route-path {
+      fill: none;
+      stroke-width: 1.65;
+      pointer-events: none;
+      opacity: 0.96;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .route-click {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 7;
+      pointer-events: stroke;
+      cursor: pointer;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .planner-route {
+      opacity: 1;
+      filter: drop-shadow(0 0 1px #111612) drop-shadow(0 0 2px rgba(17,22,18,0.95));
+    }
+    .decision-route {
+      stroke: var(--amber);
+      stroke-width: 2.1;
+      opacity: 0;
+      filter: drop-shadow(0 0 2px rgba(214,162,58,0.42));
+      transition: opacity 120ms ease;
+      vector-effect: non-scaling-stroke;
+    }
+    .decision-wait {
+      fill: none;
+      stroke: var(--amber);
+      stroke-width: 1.35;
+      opacity: 0;
+      transition: opacity 120ms ease;
+      vector-effect: non-scaling-stroke;
+    }
+    .decision-step.active .decision-route,
+    .decision-step.active .decision-wait { opacity: 1; }
+    .decision-click { display: none; }
+    .decision-click.active { display: block; }
+
+    .path-hotspot {
+      position: absolute;
+      z-index: 80;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .path-hotspot.active .path-tooltip { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+    .hotspot-maneuver { left: 43%; top: 30%; }
+    .hotspot-force { left: 36%; top: 32%; }
+    .hotspot-coordination { left: 45%; top: 70%; }
+    .hotspot-decision { left: 45%; top: 49%; }
+    .hotspot-decision.step-1 { left: 25%; top: 41%; }
+    .hotspot-decision.step-2 { left: 43%; top: 30%; }
+    .hotspot-decision.step-3 { left: 67%; top: 43%; }
+    .hotspot-decision.step-4 { left: 80%; top: 45%; }
+
+    .path-tooltip, .unit-tooltip, .enemy-tooltip {
+      position: absolute;
+      z-index: 999;
+      width: 310px;
+      max-width: calc(100vw - 64px);
+      padding: 10px;
+      color: var(--text);
+      background: #111612;
+      border: 1px solid var(--amber);
+      box-shadow: 8px 8px 0 rgba(0,0,0,0.32);
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .path-tooltip { left: 50%; top: calc(100% + 8px); transform: translate(-50%, 6px); }
+    .hotspot-coordination .path-tooltip, .hotspot-decision .path-tooltip { top: auto; bottom: calc(100% + 8px); }
+
+    .path-tooltip strong, .unit-tooltip strong, .enemy-tooltip strong {
+      display: block;
+      margin: 0 0 7px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line-dim);
+      color: var(--amber);
+      font: 700 11px var(--font-ui);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .path-tooltip p, .unit-tooltip p, .enemy-tooltip p { margin: 0; color: var(--text); font: 12px/1.45 var(--font-ui); }
+
+    .node {
+      position: absolute;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 34px;
+      background: #151b17;
+      border: 1px solid var(--line);
+      color: var(--text);
+      font: 700 11px var(--font-ui);
+    }
+
+    .node.critical { background: var(--red); color: var(--white); border-color: #d08370; }
+
+    .n-a { left: 9%; top: 47%; }
+    .n-b { left: 29%; top: 28%; }
+    .n-c { left: 30%; top: 64%; }
+    .n-d { left: 52%; top: 25%; }
+    .n-i { left: 52%; top: 67%; }
+    .n-e { left: 76%; top: 45%; }
+
+    .unit-wrap { position: absolute; z-index: 30; transform: translate(-50%, -50%); }
+    .unit-wrap { transition: left 140ms ease, top 140ms ease; }
+    .unit-wrap:hover { z-index: 1000; }
+    .unit-chip {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: var(--green);
+      color: var(--black);
+      border: 1px solid #c7de9f;
+      font: 700 7px var(--font-ui);
+      cursor: help;
+      box-shadow: 0 0 0 1px rgba(17,22,18,0.9);
+    }
+    .unit-wrap:hover .unit-tooltip { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .u331 { left: 15%; top: 55%; }
+    .u332 { left: 54%; top: 73%; }
+    .u333 { left: 13%; top: 60%; }
+    .unit-tooltip { width: 240px; left: 18px; top: 30px; z-index: 1001; }
+
+    .enemy-unit {
+      position: absolute;
+      z-index: 28;
+      width: 20px;
+      height: 19px;
+      --enemy-rot: 0deg;
+      cursor: help;
+    }
+
+    .enemy-unit::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 19px solid var(--amber);
+      transform: rotate(var(--enemy-rot));
+      transform-origin: 50% 62%;
+      filter: drop-shadow(0 0 0 #111612) drop-shadow(0 2px 0 rgba(0,0,0,0.75));
+    }
+
+    .enemy-unit:hover { z-index: 2000; }
+    .enemy-unit:hover .enemy-tooltip { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .enemy-tooltip {
+      width: 260px;
+      left: 18px;
+      top: 24px;
+      z-index: 2001;
+      padding: 10px;
+      background: #111612;
+      border-color: #d6a23a;
+      box-shadow: 6px 6px 0 rgba(0,0,0,0.46), 0 0 0 1px rgba(214,162,58,0.18);
+      filter: none;
+    }
+
+    .enemy-b1 { left: 34%; top: 23%; --enemy-rot: -10deg; }
+    .enemy-b2 { left: 37%; top: 25%; --enemy-rot: 12deg; }
+    .enemy-i1 { left: 57%; top: 62%; --enemy-rot: -12deg; }
+    .enemy-i2 { left: 60%; top: 64%; --enemy-rot: 10deg; }
+
+    .enemy-tooltip strong {
+      border-bottom-color: rgba(214,162,58,0.58);
+    }
+
+    .enemy-tooltip p {
+      line-height: 1.5;
+    }
+
+    .map-legend {
+      position: absolute;
+      left: 82px;
+      right: 10px;
+      bottom: 10px;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 12px;
+      padding: 9px;
+      background: rgba(17,22,18,0.90);
+      border: 1px solid var(--line-dim);
+    }
+    .legend-line { display: flex; align-items: center; gap: 8px; color: var(--muted); font: 700 10px var(--font-ui); text-transform: uppercase; }
+    .stroke { width: 34px; height: 0; border-top: 3px solid var(--green); }
+    .stroke.blue { border-color: var(--blue); border-style: dashed; }
+    .stroke.force { border-color: var(--green); border-style: dotted; }
+    .stroke.amber { border-color: var(--amber); }
+
+    .side-stack { display: grid; gap: 10px; align-content: start; }
+    .summary-card { background: var(--panel-2); }
+    .summary-body { display: grid; gap: 9px; }
+    .summary-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+
+    .planner-id {
+      display: inline-flex;
+      width: fit-content;
+      padding: 4px 6px;
+      color: var(--black);
+      background: var(--blue);
+      font: 700 10px var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .decision-card { border-color: rgba(214,162,58,0.75); }
+    .decision-card .card-header { border-bottom-color: rgba(214,162,58,0.65); }
+    .decision-card .planner-id { background: var(--amber); }
+
+    .route-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .route-point {
+      padding: 4px 6px;
+      border: 1px solid var(--line-dim);
+      color: var(--text);
+      background: #151b17;
+      font: 700 10px var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .move-table { width: 100%; border-collapse: collapse; font-family: var(--font-ui); }
+    .move-table th, .move-table td {
+      text-align: left;
+      padding: 7px 6px;
+      border: 1px solid var(--line-dim);
+      font-size: 11px;
+    }
+    .move-table th { color: var(--amber); background: var(--black); text-transform: uppercase; }
+    .move-table td { color: var(--text); background: #18201b; }
+
+    .decision-step-panel { display: none; }
+    .decision-step-panel.active { display: grid; gap: 9px; }
+
+    .results-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(17,22,18,0.82);
+    }
+
+    .results-overlay.active { display: grid; }
+
+    .results-dashboard {
+      width: min(1040px, 100%);
+      max-height: min(760px, calc(100vh - 36px));
+      overflow: auto;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(rgba(143,179,106,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(143,179,106,0.045) 1px, transparent 1px),
+        var(--panel-2);
+      background-size: 24px 24px;
+      box-shadow: 10px 10px 0 rgba(0,0,0,0.38), inset 0 0 0 1px rgba(0,0,0,0.42);
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(17,22,18,0.82);
+    }
+
+    .results-header p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .close-results {
+      flex: none;
+      min-width: 86px;
+      color: var(--amber);
+      background: transparent;
+      border-color: rgba(214,162,58,0.72);
+      cursor: pointer;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .result-panel {
+      border: 1px solid var(--line-dim);
+      background: rgba(34,42,37,0.92);
+    }
+
+    .result-panel.wide { grid-column: 1 / -1; }
+
+    .result-panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line-dim);
+      background: rgba(17,22,18,0.64);
+    }
+
+    .result-panel-body {
+      display: grid;
+      gap: 9px;
+      padding: 10px;
+    }
+
+    .score-line {
+      display: grid;
+      grid-template-columns: 120px 1fr 48px;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font: 700 10px var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .score-track {
+      height: 8px;
+      border: 1px solid var(--line-dim);
+      background: var(--black);
+    }
+
+    .score-fill {
+      height: 100%;
+      background: var(--green);
+    }
+
+    .score-fill.amber { background: var(--amber); }
+
+    .check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .check-item {
+      padding: 7px 8px;
+      border: 1px solid var(--line-dim);
+      color: var(--text);
+      background: #18201b;
+      font: 700 10px/1.25 var(--font-ui);
+      text-transform: uppercase;
+    }
+
+    .reflection-list {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .reflection-list li {
+      padding: 8px 9px;
+      border-left: 3px solid var(--green);
+      color: var(--text);
+      background: rgba(24,32,27,0.92);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .reflection-list li.warning { border-left-color: var(--amber); }
+
+    @media (max-width: 1180px) {
+      .layout, .workspace-body { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .topbar { grid-template-columns: 1fr; }
+      .topbar-meta { grid-template-columns: repeat(2, 1fr); border-left: 0; border-top: 1px solid var(--line-dim); }
+    }
+
+    @media (max-width: 720px) {
+      .shell { width: min(100% - 12px, 1500px); padding-top: 6px; }
+      .topbar-meta, .map-legend { grid-template-columns: 1fr; }
+      .workspace-header { display: grid; }
+      .map-card { min-height: 540px; }
+      .path-tooltip, .unit-tooltip { width: min(290px, calc(100vw - 40px)); }
+      .results-grid, .check-grid { grid-template-columns: 1fr; }
+      .results-header { display: grid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="topbar-main">
+        <div class="system-label">Marik Tactical Decision Support / Route Reasoning</div>
+        <h1>Strategy Assess + Planner Route Inspection</h1>
+      </div>
+      <div class="topbar-meta">
+        <div class="meta-cell"><span>OCA</span><strong>LILY</strong></div>
+        <div class="meta-cell"><span>Critical Pt</span><strong>1-E</strong></div>
+        <div class="meta-cell"><span>Mode</span><strong>Split-Sync</strong></div>
+        <div class="meta-cell"><span>Status</span><strong>Planning</strong></div>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel">
+        <div class="panel-header">
+          <h2>01 Assess</h2>
+          <span class="status">Ready</span>
+        </div>
+        <div class="panel-body">
+          <p class="help-text">Enter operator intent. The model extracts a strategy profile used by route planners and tactical decision.</p>
+          <div class="form-stack" style="margin-top: 10px;">
+            <label>OCA Selection
+              <select>
+                <option>LILY</option>
+                <option>LESTER</option>
+              </select>
+            </label>
+            <label>Mission Strategy
+              <textarea>Split units across all possible paths, approach safely, coordinate attacks against enemy-held points, and wait for all friendly units before entering the critical point.</textarea>
+            </label>
+            <div class="button-row">
+              <button>Extract</button>
+              <span class="button secondary">Clarify</span>
+            </div>
+          </div>
+
+          <div class="strategy-card">
+            <div class="card-header">
+              <h3>Strategy Profile</h3>
+              <span class="status amber">Low Risk</span>
+            </div>
+            <div class="summary-body">
+              <h3>Coordinated Critical Entry</h3>
+              <p>Secure approach paths and consolidate friendly units before committing into the critical point.</p>
+              <div class="tag-row">
+                <span class="tag">Split then sync</span>
+                <span class="tag">Full-force entry</span>
+                <span class="tag">Avoid solo engage</span>
+              </div>
+              <div class="bars">
+                <div class="bar-row"><span>Coordination</span><div class="bar-track"><div class="bar-fill" style="width: 50%"></div></div><b>0.50</b></div>
+                <div class="bar-row"><span>Preservation</span><div class="bar-track"><div class="bar-fill" style="width: 35%"></div></div><b>0.35</b></div>
+                <div class="bar-row"><span>Speed</span><div class="bar-track"><div class="bar-fill" style="width: 15%"></div></div><b>0.15</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="workspace">
+        <header class="workspace-header">
+          <div>
+            <h2>02 Planner + Battle Reasoning</h2>
+            <p>Planner paths are shown on the tactical overlay. Click path segments for model reasoning. Hover over friendly units for type and strength.</p>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Available: 331 / 332 / 333</span>
+            <span class="tag">Display: Reasoning Overlay</span>
+          </div>
+        </header>
+
+        <div class="workspace-body">
+          <div class="map-card" aria-label="Route map mockup">
+            <div class="step-nav" aria-label="Decision step navigation">
+              <button class="step-button" id="prevStep" type="button" aria-label="Previous decision step">&lt;</button>
+              <div class="step-label" id="stepLabel">Decision Step 01 / 04</div>
+              <button class="step-button" id="nextStep" type="button" aria-label="Next decision step">&gt;</button>
+            </div>
+            <div class="step-caption" id="stepCaption">Current model next-step output: 331 and 333 advance from 1-A to 1-B; 332 holds.</div>
+            <button class="results-trigger" id="viewResults" type="button" hidden>View Results</button>
+            <div class="zoom-controls" aria-label="Map zoom controls">
+              <button class="zoom-button" id="zoomIn" type="button" aria-label="Zoom in">+</button>
+              <button class="zoom-button" id="zoomOut" type="button" aria-label="Zoom out">-</button>
+            </div>
+
+            <div class="map-viewport" id="mapViewport" aria-label="Pannable tactical map">
+              <div class="map-layer" id="mapLayer">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+              <defs>
+                <marker id="arrowGreen" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="#b8d88a" />
+                </marker>
+                <marker id="arrowBlue" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="#91c7dc" />
+                </marker>
+                <marker id="arrowAmber" markerWidth="5" markerHeight="5" refX="4.4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L5,2.5 L0,5 z" fill="#d6a23a" />
+                </marker>
+              </defs>
+
+              <!-- Single terrain landmass beneath the tactical graph. -->
+              <path class="terrain-island" d="M8 51 C10 39, 18 34, 27 29 C35 24, 41 18, 53 20 C66 22, 76 29, 84 40 C91 50, 87 63, 77 70 C67 78, 53 82, 39 79 C26 77, 14 69, 9 59 C8 56, 7 54, 8 51 Z" />
+
+              <!-- Planner outputs: full routes from current positions to critical point. -->
+              <path class="route-path planner-route" d="M15 55 C30 30, 42 31, 55 32 S70 44, 80 51" stroke="#b8d88a" stroke-dasharray="4 3" marker-end="url(#arrowGreen)" />
+              <path class="route-path planner-route" d="M15 55 C30 76, 42 70, 55 73 S70 60, 80 51" stroke="#91c7dc" stroke-dasharray="4 3" marker-end="url(#arrowBlue)" />
+              <path class="route-path planner-route" d="M15 55 C28 40, 37 34, 55 32 S70 42, 80 51" stroke="#c8e889" stroke-dasharray="1 4" marker-end="url(#arrowGreen)" />
+
+              <!-- Tactical decision output: highlighted next-step action only. -->
+              <g class="decision-step active" data-step="0">
+                <path class="decision-route" d="M15 55 C21 49, 26 43, 31 36" marker-end="url(#arrowAmber)" />
+                <path class="decision-route" d="M13 60 C20 53, 27 46, 33 39" marker-end="url(#arrowAmber)" />
+              </g>
+              <g class="decision-step" data-step="1">
+                <path class="decision-route" d="M31 36 C38 32, 46 31, 55 32" marker-end="url(#arrowAmber)" />
+                <path class="decision-route" d="M33 39 C40 35, 48 34, 56 36" marker-end="url(#arrowAmber)" />
+              </g>
+              <g class="decision-step" data-step="2">
+                <path class="decision-route" d="M55 32 C64 37, 72 44, 80 51" marker-end="url(#arrowAmber)" />
+                <path class="decision-route" d="M56 36 C65 40, 73 46, 80 51" marker-end="url(#arrowAmber)" />
+                <path class="decision-route" d="M54 73 C64 67, 73 58, 80 51" marker-end="url(#arrowAmber)" />
+              </g>
+              <g class="decision-step" data-step="3"></g>
+
+              <!-- Click targets follow the actual route strokes, not rectangular bounds. -->
+              <path class="route-click" data-popup="hotspot-maneuver" d="M15 55 C30 30, 42 31, 55 32 S70 44, 80 51" />
+              <path class="route-click" data-popup="hotspot-coordination" d="M15 55 C30 76, 42 70, 55 73 S70 60, 80 51" />
+              <path class="route-click" data-popup="hotspot-force" d="M15 55 C28 40, 37 34, 55 32 S70 42, 80 51" />
+              <g class="decision-click active" data-step-click="0">
+                <path class="route-click" data-popup="decisionHotspot" d="M15 55 C21 49, 26 43, 31 36" />
+                <path class="route-click" data-popup="decisionHotspot" d="M13 60 C20 53, 27 46, 33 39" />
+              </g>
+              <g class="decision-click" data-step-click="1">
+                <path class="route-click" data-popup="decisionHotspot" d="M31 36 C38 32, 46 31, 55 32" />
+                <path class="route-click" data-popup="decisionHotspot" d="M33 39 C40 35, 48 34, 56 36" />
+              </g>
+              <g class="decision-click" data-step-click="2">
+                <path class="route-click" data-popup="decisionHotspot" d="M55 32 C64 37, 72 44, 80 51" />
+                <path class="route-click" data-popup="decisionHotspot" d="M56 36 C65 40, 73 46, 80 51" />
+                <path class="route-click" data-popup="decisionHotspot" d="M54 73 C64 67, 73 58, 80 51" />
+              </g>
+              <g class="decision-click" data-step-click="3">
+                <circle class="route-click" data-popup="decisionHotspot" cx="80" cy="51" r="6" />
+              </g>
+            </svg>
+
+            <div class="path-hotspot hotspot-maneuver" id="hotspot-maneuver">
+              <div class="path-tooltip">
+                <strong>Maneuver Planner Reasoning</strong>
+                <p>Fastest legal progress to critical point. Accepts exposure near enemy-held points because speed and route coverage are prioritized.</p>
+              </div>
+            </div>
+            <div class="path-hotspot hotspot-force" id="hotspot-force">
+              <div class="path-tooltip">
+                <strong>Force Planner Reasoning</strong>
+                <p>331 and 333 move together into enemy-held 1-B so neither attacks unsupported. 332 covers alternate route but must not enter 1-E alone.</p>
+              </div>
+            </div>
+            <div class="path-hotspot hotspot-coordination" id="hotspot-coordination">
+              <div class="path-tooltip">
+                <strong>Coordination Planner Reasoning</strong>
+                <p>Maintains split-path coverage and preserves coordinated critical entry. Movement into 1-E waits until all friendly units can enter together.</p>
+              </div>
+            </div>
+            <div class="path-hotspot hotspot-decision step-1" id="decisionHotspot">
+              <div class="path-tooltip">
+                <strong>Tactical Decision Reasoning</strong>
+                <p id="decisionTooltip">Coordination route best matches the strategy. 331 and 333 move together toward 1-B; 332 holds at 1-I until the force can synchronize.</p>
+              </div>
+            </div>
+
+            <div class="node n-a">1-A</div>
+            <div class="node n-b enemy">1-B</div>
+            <div class="node n-c">1-C</div>
+            <div class="node n-d">1-D</div>
+            <div class="node n-i enemy">1-I</div>
+            <div class="node n-e critical">1-E</div>
+
+            <div class="enemy-unit enemy-b1" aria-label="Enemy unit near 1-B">
+              <div class="enemy-tooltip">
+                <strong>Enemy Unit E1</strong>
+                <p>TYPE: Infantry Element<br>ROLE: Blocks northern approach<br>SIZE: 6<br>STATE: Hostile near 1-B</p>
+              </div>
+            </div>
+            <div class="enemy-unit enemy-b2" aria-label="Enemy unit near 1-B">
+              <div class="enemy-tooltip">
+                <strong>Enemy Unit E2</strong>
+                <p>TYPE: Support Element<br>ROLE: Reinforces contested point<br>SIZE: 4<br>STATE: Hostile near 1-B</p>
+              </div>
+            </div>
+            <div class="enemy-unit enemy-i1" aria-label="Enemy unit near 1-I">
+              <div class="enemy-tooltip">
+                <strong>Enemy Unit E3</strong>
+                <p>TYPE: Infantry Element<br>ROLE: Covers alternate route<br>SIZE: 5<br>STATE: Hostile near 1-I</p>
+              </div>
+            </div>
+            <div class="enemy-unit enemy-i2" aria-label="Enemy unit near 1-I">
+              <div class="enemy-tooltip">
+                <strong>Enemy Unit E4</strong>
+                <p>TYPE: Recon Screen<br>ROLE: Early contact risk<br>SIZE: 3<br>STATE: Hostile near 1-I</p>
+              </div>
+            </div>
+
+            <div class="unit-wrap u331" id="unit331">
+              <div class="unit-chip">331</div>
+              <div class="unit-tooltip">
+                <strong>Friendly Unit 331</strong>
+                <p>TYPE: Infantry Section<br>ROLE: Assault / Main Route<br>SIZE: 10<br>STATE: Available</p>
+              </div>
+            </div>
+            <div class="unit-wrap u332" id="unit332">
+              <div class="unit-chip">332</div>
+              <div class="unit-tooltip">
+                <strong>Friendly Unit 332</strong>
+                <p>TYPE: Recon Element<br>ROLE: Alternate Path Coverage<br>SIZE: 8<br>STATE: Holding before critical entry</p>
+              </div>
+            </div>
+            <div class="unit-wrap u333" id="unit333">
+              <div class="unit-chip">333</div>
+              <div class="unit-tooltip">
+                <strong>Friendly Unit 333</strong>
+                <p>TYPE: Infantry Section<br>ROLE: Assault Support<br>SIZE: 10<br>STATE: Available</p>
+              </div>
+            </div>
+              </div>
+            </div>
+
+            <div class="map-legend">
+              <div class="legend-line"><span class="stroke"></span>Maneuver planner path</div>
+              <div class="legend-line"><span class="stroke force"></span>Force planner path</div>
+              <div class="legend-line"><span class="stroke blue"></span>Coordination planner path</div>
+              <div class="legend-line"><span class="stroke amber"></span>Tactical decision path</div>
+              <div class="legend-line"><span class="enemy-unit" style="position: relative; left: auto; top: auto; transform: scale(.45);"></span>Enemy unit marker</div>
+            </div>
+          </div>
+
+          <div class="side-stack">
+            <article class="summary-card">
+              <div class="card-header">
+                <h3>Planner Output</h3>
+                <span class="status">3 Routes</span>
+              </div>
+              <div class="summary-body">
+                <p>Click route overlays to inspect model reasoning. Each path represents one planner route recommendation.</p>
+                <div class="route-line"><span class="route-point">Maneuver</span><span class="route-point">Force</span><span class="route-point">Coordination</span></div>
+              </div>
+            </article>
+
+            <article class="summary-card decision-card">
+              <div class="card-header">
+                <h3>Next Step</h3>
+                <span class="status amber" id="sideStepLabel">Step 01</span>
+              </div>
+              <div class="summary-body">
+                <p>Click amber path for tactical decision reasoning.</p>
+                <div class="decision-step-panel active" data-step-panel="0">
+                  <table class="move-table">
+                    <thead><tr><th>Unit</th><th>Action</th><th>From</th><th>To</th></tr></thead>
+                    <tbody>
+                      <tr><td>331</td><td>MOVE</td><td>1-A</td><td>1-B</td></tr>
+                      <tr><td>333</td><td>MOVE</td><td>1-A</td><td>1-B</td></tr>
+                      <tr><td>332</td><td>WAIT</td><td>1-I</td><td>1-I</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="decision-step-panel" data-step-panel="1">
+                  <table class="move-table">
+                    <thead><tr><th>Unit</th><th>Action</th><th>From</th><th>To</th></tr></thead>
+                    <tbody>
+                      <tr><td>331</td><td>MOVE</td><td>1-B</td><td>1-D</td></tr>
+                      <tr><td>333</td><td>MOVE</td><td>1-B</td><td>1-D</td></tr>
+                      <tr><td>332</td><td>WAIT</td><td>1-I</td><td>1-I</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="decision-step-panel" data-step-panel="2">
+                  <table class="move-table">
+                    <thead><tr><th>Unit</th><th>Action</th><th>From</th><th>To</th></tr></thead>
+                    <tbody>
+                      <tr><td>331</td><td>MOVE</td><td>1-D</td><td>1-E</td></tr>
+                      <tr><td>333</td><td>MOVE</td><td>1-D</td><td>1-E</td></tr>
+                      <tr><td>332</td><td>MOVE</td><td>1-I</td><td>1-E</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="decision-step-panel" data-step-panel="3">
+                  <table class="move-table">
+                    <thead><tr><th>Unit</th><th>State</th><th>Location</th><th>Result</th></tr></thead>
+                    <tbody>
+                      <tr><td>331</td><td>AT POINT</td><td>1-E</td><td>CAPTURED</td></tr>
+                      <tr><td>333</td><td>AT POINT</td><td>1-E</td><td>CAPTURED</td></tr>
+                      <tr><td>332</td><td>AT POINT</td><td>1-E</td><td>CAPTURED</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </article>
+
+            <article class="summary-card">
+              <div class="card-header">
+                <h3>Unit Inspection</h3>
+                <span class="status">Hover</span>
+              </div>
+              <div class="summary-body">
+                <p>Hover friendly unit markers to show type, role, size, and command state.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="results-overlay" id="resultsDashboard" aria-hidden="true">
+    <section class="results-dashboard" role="dialog" aria-modal="true" aria-labelledby="resultsTitle">
+      <header class="results-header">
+        <div>
+          <div class="system-label">After Action Evaluation / Reflection Output</div>
+          <h2 id="resultsTitle">Run Results Dashboard</h2>
+          <p>Displays saved evaluation and reflection results after the final tactical decision step.</p>
+        </div>
+        <button class="close-results" id="closeResults" type="button">Close</button>
+      </header>
+
+      <div class="results-grid">
+        <article class="result-panel">
+          <div class="result-panel-header">
+            <h3>Layer 1 Evaluation</h3>
+            <span class="status">Pass</span>
+          </div>
+          <div class="result-panel-body">
+            <div class="score-line"><span>Score</span><div class="score-track"><div class="score-fill" style="width: 92%"></div></div><b>0.92</b></div>
+            <div class="check-grid">
+              <div class="check-item">Completed run</div>
+              <div class="check-item">Critical point captured</div>
+              <div class="check-item">No all-wait terminal stall</div>
+              <div class="check-item">Planner coverage OK</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="result-panel">
+          <div class="result-panel-header">
+            <h3>Layer 2 Alignment</h3>
+            <span class="status">Pass</span>
+          </div>
+          <div class="result-panel-body">
+            <div class="score-line"><span>Coordination</span><div class="score-track"><div class="score-fill" style="width: 94%"></div></div><b>0.94</b></div>
+            <div class="score-line"><span>Preservation</span><div class="score-track"><div class="score-fill amber" style="width: 78%"></div></div><b>0.78</b></div>
+            <div class="score-line"><span>Capture</span><div class="score-track"><div class="score-fill" style="width: 100%"></div></div><b>1.00</b></div>
+          </div>
+        </article>
+
+        <article class="result-panel wide">
+          <div class="result-panel-header">
+            <h3>Reflection Summary</h3>
+            <span class="status amber">Persisted</span>
+          </div>
+          <div class="result-panel-body">
+            <ul class="reflection-list">
+              <li>The run satisfied the coordinated critical-entry strategy because all friendly units entered 1-E together after staging at their approach points.</li>
+              <li>Planner suggestions were useful because they exposed both main-force and alternate-route options before tactical decision selected the synchronized entry path.</li>
+              <li class="warning">Future similar runs should preserve WAIT as a valid action when the strategy requires full-force entry, but only while at least one unit is still moving into position.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const stepData = [
+      {
+        label: "Decision Step 01 / 04",
+        side: "Step 01",
+        caption: "Current model next-step output: 331 and 333 advance from 1-A to 1-B; 332 holds.",
+        tooltip: "Coordination route best matches the strategy. 331 and 333 move together toward 1-B; 332 holds at 1-I until the force can synchronize.",
+        hotspotClass: "step-1",
+        unitPositions: {
+          "331": { left: "15%", top: "55%" },
+          "333": { left: "13%", top: "60%" },
+          "332": { left: "54%", top: "73%" }
+        }
+      },
+      {
+        label: "Decision Step 02 / 04",
+        side: "Step 02",
+        caption: "Current model next-step output: 331 and 333 continue from 1-B to 1-D; 332 holds at 1-I.",
+        tooltip: "The main force has cleared the contested approach and now advances together to the pre-critical assembly point. 332 continues to hold the alternate approach so no unit enters 1-E early.",
+        hotspotClass: "step-2",
+        unitPositions: {
+          "331": { left: "31%", top: "36%" },
+          "333": { left: "33%", top: "39%" },
+          "332": { left: "54%", top: "73%" }
+        }
+      },
+      {
+        label: "Decision Step 03 / 04",
+        side: "Step 03",
+        caption: "Current model next-step output: all friendly units enter critical point 1-E together.",
+        tooltip: "Full-force critical entry is now ready. 331 and 333 enter from 1-D while 332 enters from 1-I, satisfying the coordinated capture requirement.",
+        hotspotClass: "step-3",
+        unitPositions: {
+          "331": { left: "55%", top: "32%" },
+          "333": { left: "56%", top: "36%" },
+          "332": { left: "54%", top: "73%" }
+        }
+      },
+      {
+        label: "Decision Step 04 / 04",
+        side: "Step 04",
+        caption: "Final state display: all friendly units are positioned at critical point 1-E.",
+        tooltip: "The coordinated capture sequence is complete. All friendly units are now represented at the final critical point after the synchronized entry.",
+        hotspotClass: "step-4",
+        unitPositions: {
+          "331": { left: "77%", top: "47%" },
+          "333": { left: "82%", top: "51%" },
+          "332": { left: "78%", top: "56%" }
+        }
+      }
+    ];
+
+    let currentStep = 0;
+    const stepLabel = document.getElementById("stepLabel");
+    const sideStepLabel = document.getElementById("sideStepLabel");
+    const stepCaption = document.getElementById("stepCaption");
+    const decisionTooltip = document.getElementById("decisionTooltip");
+    const decisionHotspot = document.getElementById("decisionHotspot");
+    const decisionSteps = Array.from(document.querySelectorAll(".decision-step"));
+    const decisionClicks = Array.from(document.querySelectorAll(".decision-click"));
+    const decisionPanels = Array.from(document.querySelectorAll(".decision-step-panel"));
+    const pathHotspots = Array.from(document.querySelectorAll(".path-hotspot"));
+    const routeClicks = Array.from(document.querySelectorAll(".route-click"));
+    const viewResults = document.getElementById("viewResults");
+    const resultsDashboard = document.getElementById("resultsDashboard");
+    const closeResults = document.getElementById("closeResults");
+    const mapViewport = document.getElementById("mapViewport");
+    const mapLayer = document.getElementById("mapLayer");
+    const zoomIn = document.getElementById("zoomIn");
+    const zoomOut = document.getElementById("zoomOut");
+    const unitMarkers = {
+      "331": document.getElementById("unit331"),
+      "332": document.getElementById("unit332"),
+      "333": document.getElementById("unit333")
+    };
+    const mapTransform = { x: 0, y: 0, scale: 1 };
+    const zoomBounds = { min: 1, max: 2.8 };
+    let dragStart = null;
+    let suppressNextRouteClick = false;
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function clampMapPan() {
+      const rect = mapViewport.getBoundingClientRect();
+      const minX = rect.width * (1 - mapTransform.scale);
+      const minY = rect.height * (1 - mapTransform.scale);
+
+      mapTransform.x = mapTransform.scale === 1 ? 0 : clamp(mapTransform.x, minX, 0);
+      mapTransform.y = mapTransform.scale === 1 ? 0 : clamp(mapTransform.y, minY, 0);
+    }
+
+    function applyMapTransform() {
+      clampMapPan();
+      mapLayer.style.transform = `translate(${mapTransform.x}px, ${mapTransform.y}px) scale(${mapTransform.scale})`;
+    }
+
+    function zoomMap(nextScale, originX, originY) {
+      const rect = mapViewport.getBoundingClientRect();
+      const clampedScale = clamp(nextScale, zoomBounds.min, zoomBounds.max);
+      const localX = originX - rect.left;
+      const localY = originY - rect.top;
+      const mapX = (localX - mapTransform.x) / mapTransform.scale;
+      const mapY = (localY - mapTransform.y) / mapTransform.scale;
+
+      mapTransform.scale = clampedScale;
+      mapTransform.x = localX - mapX * clampedScale;
+      mapTransform.y = localY - mapY * clampedScale;
+      applyMapTransform();
+    }
+
+    function zoomMapFromCenter(multiplier) {
+      const rect = mapViewport.getBoundingClientRect();
+      zoomMap(mapTransform.scale * multiplier, rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
+    function closePathPopups(exceptHotspot = null) {
+      pathHotspots.forEach((hotspot) => {
+        if (hotspot !== exceptHotspot) hotspot.classList.remove("active");
+      });
+    }
+
+    function toggleRoutePopup(route) {
+      const hotspot = document.getElementById(route.dataset.popup);
+      if (!hotspot) return;
+      const shouldOpen = !hotspot.classList.contains("active");
+      closePathPopups(hotspot);
+      hotspot.classList.toggle("active", shouldOpen);
+    }
+
+    function openResultsDashboard() {
+      resultsDashboard.classList.add("active");
+      resultsDashboard.setAttribute("aria-hidden", "false");
+    }
+
+    function closeResultsDashboard() {
+      resultsDashboard.classList.remove("active");
+      resultsDashboard.setAttribute("aria-hidden", "true");
+    }
+
+    function renderStep(nextStep) {
+      currentStep = (nextStep + stepData.length) % stepData.length;
+      const data = stepData[currentStep];
+      closePathPopups();
+      stepLabel.textContent = data.label;
+      sideStepLabel.textContent = data.side;
+      stepCaption.textContent = data.caption;
+      decisionTooltip.textContent = data.tooltip;
+      decisionHotspot.classList.remove("step-1", "step-2", "step-3", "step-4");
+      decisionHotspot.classList.add(data.hotspotClass);
+
+      decisionSteps.forEach((step) => {
+        step.classList.toggle("active", Number(step.dataset.step) === currentStep);
+      });
+      decisionClicks.forEach((step) => {
+        step.classList.toggle("active", Number(step.dataset.stepClick) === currentStep);
+      });
+      decisionPanels.forEach((panel) => {
+        panel.classList.toggle("active", Number(panel.dataset.stepPanel) === currentStep);
+      });
+      viewResults.hidden = currentStep !== stepData.length - 1;
+
+      Object.entries(data.unitPositions).forEach(([unitId, position]) => {
+        const marker = unitMarkers[unitId];
+        if (!marker) return;
+        marker.style.left = position.left;
+        marker.style.top = position.top;
+      });
+    }
+
+    routeClicks.forEach((route) => {
+      route.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (suppressNextRouteClick) {
+          suppressNextRouteClick = false;
+          return;
+        }
+        toggleRoutePopup(route);
+      });
+    });
+
+    mapViewport.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const zoomFactor = event.deltaY < 0 ? 1.12 : 0.89;
+      zoomMap(mapTransform.scale * zoomFactor, event.clientX, event.clientY);
+    }, { passive: false });
+
+    mapViewport.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      if (event.target.closest(".path-tooltip, .unit-tooltip, .enemy-tooltip")) return;
+      event.preventDefault();
+      dragStart = {
+        pointerId: event.pointerId,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        mapX: mapTransform.x,
+        mapY: mapTransform.y,
+        routeTarget: event.target.closest(".route-click"),
+        moved: false
+      };
+      mapViewport.classList.add("dragging");
+      mapViewport.setPointerCapture(event.pointerId);
+    });
+
+    mapViewport.addEventListener("pointermove", (event) => {
+      if (!dragStart) return;
+      const deltaX = event.clientX - dragStart.clientX;
+      const deltaY = event.clientY - dragStart.clientY;
+
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) dragStart.moved = true;
+      mapTransform.x = dragStart.mapX + deltaX;
+      mapTransform.y = dragStart.mapY + deltaY;
+      applyMapTransform();
+    });
+
+    function endMapDrag(event) {
+      if (!dragStart) return;
+      if (dragStart.moved) {
+        suppressNextRouteClick = true;
+        setTimeout(() => { suppressNextRouteClick = false; }, 150);
+      } else if (dragStart.routeTarget) {
+        toggleRoutePopup(dragStart.routeTarget);
+        suppressNextRouteClick = true;
+        setTimeout(() => { suppressNextRouteClick = false; }, 150);
+      }
+      mapViewport.classList.remove("dragging");
+      if (mapViewport.hasPointerCapture(event.pointerId)) mapViewport.releasePointerCapture(event.pointerId);
+      dragStart = null;
+    }
+
+    mapViewport.addEventListener("pointerup", endMapDrag);
+    mapViewport.addEventListener("pointercancel", endMapDrag);
+    mapViewport.addEventListener("click", (event) => {
+      if (!suppressNextRouteClick) return;
+      event.preventDefault();
+      event.stopPropagation();
+      suppressNextRouteClick = false;
+    });
+    zoomIn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      zoomMapFromCenter(1.18);
+    });
+    zoomOut.addEventListener("click", (event) => {
+      event.stopPropagation();
+      zoomMapFromCenter(0.84);
+    });
+    window.addEventListener("resize", applyMapTransform);
+    document.addEventListener("click", () => closePathPopups());
+    viewResults.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closePathPopups();
+      openResultsDashboard();
+    });
+    closeResults.addEventListener("click", closeResultsDashboard);
+    resultsDashboard.addEventListener("click", (event) => {
+      if (event.target === resultsDashboard) closeResultsDashboard();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") closeResultsDashboard();
+    });
+    document.getElementById("prevStep").addEventListener("click", () => renderStep(currentStep - 1));
+    document.getElementById("nextStep").addEventListener("click", () => renderStep(currentStep + 1));
+    renderStep(0);
+  </script>
+</body>
+</html>
