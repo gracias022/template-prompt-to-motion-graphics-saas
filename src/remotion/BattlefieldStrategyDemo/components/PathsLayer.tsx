@@ -221,15 +221,13 @@ export const PathsLayer: FC<PathsLayerProps> = ({
 
       {move.paths.flatMap((strategy, strategyIndex) =>
         segmentsForStrategy(strategy, visibleUnitIds).map((segment, index) => {
-          const isBest = strategy.id === move.bestStrategyId;
           const stagger = strategyIndex * 5 + index * 2;
           const segmentOpacity =
             reveal *
             interpolate(frame, [8 + stagger, 26 + stagger], [0, 1], {
               extrapolateLeft: "clamp",
               extrapolateRight: "clamp",
-            }) *
-            (isBest ? 0.62 : 0.28);
+            });
 
           return (
             <ArrowSegment
@@ -237,7 +235,7 @@ export const PathsLayer: FC<PathsLayerProps> = ({
               segment={segment}
               markerId={`arrow-${move.index}-${strategy.id}`}
               opacity={segmentOpacity}
-              strokeWidth={isBest ? 4.4 : 3.2}
+              strokeWidth={3.4}
               color={strategy.color}
               progress={1}
               dashed

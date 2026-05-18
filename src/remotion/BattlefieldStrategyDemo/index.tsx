@@ -21,10 +21,8 @@ import {
   MOVE_STEP_FRAMES,
   MOVES,
   OBJECTIVE_TYPING_FRAMES,
-  OVERVIEW_RETURN_FRAMES,
   PATH_GENERATION_FRAMES,
   PINNED_TOOLTIP_FRAMES,
-  UNIT_FOCUS_FRAMES,
 } from "./data";
 import type {
   AnnotationId,
@@ -438,28 +436,6 @@ const pathGenerationScene: DemoSceneConfig = {
   highlightCard: "planner",
 };
 
-const focusUnitScene: DemoSceneConfig = {
-  ...baseScene,
-  moveIndex: 1,
-  objectiveMode: "running",
-  showPaths: true,
-  selectedUnitId: "331",
-  annotation: "focus",
-  highlightMap: true,
-  highlightCard: "unit",
-};
-
-const overviewScene: DemoSceneConfig = {
-  ...baseScene,
-  moveIndex: 1,
-  objectiveMode: "running",
-  showPaths: true,
-  annotation: "overview",
-  highlightMap: true,
-  hoveredEnemyId: "cycle",
-  highlightCard: "unit",
-};
-
 const hoverTooltipScene: DemoSceneConfig = {
   ...baseScene,
   moveIndex: 1,
@@ -524,9 +500,7 @@ const navigationFourthScene: DemoSceneConfig = {
 };
 
 const PATH_GENERATION_START = OBJECTIVE_TYPING_FRAMES;
-const UNIT_FOCUS_START = PATH_GENERATION_START + PATH_GENERATION_FRAMES;
-const OVERVIEW_RETURN_START = UNIT_FOCUS_START + UNIT_FOCUS_FRAMES;
-const HOVER_TOOLTIP_START = OVERVIEW_RETURN_START + OVERVIEW_RETURN_FRAMES;
+const HOVER_TOOLTIP_START = PATH_GENERATION_START + PATH_GENERATION_FRAMES;
 const PINNED_TOOLTIP_START = HOVER_TOOLTIP_START + HOVER_TOOLTIP_FRAMES;
 const NAVIGATION_FIRST_START = PINNED_TOOLTIP_START + PINNED_TOOLTIP_FRAMES;
 const NAVIGATION_SECOND_START = NAVIGATION_FIRST_START + MOVE_STEP_FRAMES;
@@ -555,26 +529,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 160-219: Unit 331 is selected to isolate its strategy paths. */}
-      <Sequence from={UNIT_FOCUS_START} durationInFrames={UNIT_FOCUS_FRAMES}>
-        <BattlefieldDemoScene
-          config={focusUnitScene}
-          durationInFrames={UNIT_FOCUS_FRAMES}
-        />
-      </Sequence>
-
-      {/* Frames 220-269: Unit 331 is deselected and all unit paths return. */}
-      <Sequence
-        from={OVERVIEW_RETURN_START}
-        durationInFrames={OVERVIEW_RETURN_FRAMES}
-      >
-        <BattlefieldDemoScene
-          config={overviewScene}
-          durationInFrames={OVERVIEW_RETURN_FRAMES}
-        />
-      </Sequence>
-
-      {/* Frames 270-331: Hovering a planner route shows model reasoning in a tooltip. */}
+      {/* Next segment: Hovering a planner route shows model reasoning in a tooltip. */}
       <Sequence
         from={HOVER_TOOLTIP_START}
         durationInFrames={HOVER_TOOLTIP_FRAMES}
@@ -585,7 +540,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 332-401: Clicking the amber tactical decision arrow pins next-step reasoning, then closes it with x. */}
+      {/* Next segment: Clicking the amber tactical decision arrow pins next-step reasoning, then click-away closes it. */}
       <Sequence
         from={PINNED_TOOLTIP_START}
         durationInFrames={PINNED_TOOLTIP_FRAMES}
@@ -596,7 +551,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 402-473: Navigation controls step backward and forward while Move 2 executes. */}
+      {/* Next segment: Navigation controls step backward and forward while Move 2 executes. */}
       <Sequence
         from={NAVIGATION_FIRST_START}
         durationInFrames={MOVE_STEP_FRAMES}
@@ -607,7 +562,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 474-545: Move 3 replans from the new positions and updates Next Step reasoning. */}
+      {/* Next segment: Move 3 replans from the new positions and updates Next Step reasoning. */}
       <Sequence
         from={NAVIGATION_SECOND_START}
         durationInFrames={MOVE_STEP_FRAMES}
@@ -618,7 +573,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 546-617: Move 4 synchronizes entry into the critical point. */}
+      {/* Next segment: Move 4 synchronizes entry into the critical point. */}
       <Sequence
         from={NAVIGATION_THIRD_START}
         durationInFrames={MOVE_STEP_FRAMES}
@@ -629,7 +584,7 @@ export const BattlefieldStrategyDemo: FC = () => {
         />
       </Sequence>
 
-      {/* Frames 618-689: Move 5 secures the endpoint and keeps the reasoning panel updated. */}
+      {/* Final segment: Move 5 secures the endpoint and keeps the reasoning panel updated. */}
       <Sequence
         from={NAVIGATION_FOURTH_START}
         durationInFrames={MOVE_STEP_FRAMES}
