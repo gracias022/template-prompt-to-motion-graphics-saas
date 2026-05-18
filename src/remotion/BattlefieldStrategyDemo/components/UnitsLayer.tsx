@@ -16,6 +16,7 @@ interface UnitsLayerProps {
   frame: number;
   selectedUnitId: UnitId | null;
   animateMove: boolean;
+  hoveredEnemyId: string | null;
 }
 
 const lerp = (from: number, to: number, progress: number) =>
@@ -31,6 +32,7 @@ export const UnitsLayer: FC<UnitsLayerProps> = ({
   frame,
   selectedUnitId,
   animateMove,
+  hoveredEnemyId,
 }) => {
   const { fps } = useVideoConfig();
   const travelProgress = animateMove
@@ -53,6 +55,10 @@ export const UnitsLayer: FC<UnitsLayerProps> = ({
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const activeEnemyId =
+    hoveredEnemyId === "cycle"
+      ? ENEMY_UNITS[Math.floor(frame / 45) % ENEMY_UNITS.length]?.id
+      : hoveredEnemyId;
 
   return (
     <>
@@ -122,33 +128,29 @@ export const UnitsLayer: FC<UnitsLayerProps> = ({
             clipPath: "polygon(0 0, 100% 17%, 72% 50%, 100% 84%, 0 72%)",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            left: -10,
-            top: 82,
-            color: "#d6a23a",
-            font: '700 13px "Lucida Console", "Courier New", monospace',
-            textShadow: "0 2px 8px rgba(0,0,0,0.9)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          END TARGET
-        </div>
       </div>
 
-      {ENEMY_UNITS.map((enemy) => (
-        <div
-          key={enemy.id}
-          style={{
-            position: "absolute",
-            left: enemy.position.x,
-            top: enemy.position.y,
-            opacity: enemyOpacity,
-            transform: "translate(-50%, -50%)",
-            zIndex: 22,
-          }}
-        >
+      {ENEMY_UNITS.map((enemy) => {
+        const isHovered = activeEnemyId === enemy.id;
+        const tooltipOpacity = isHovered
+          ? interpolate(frame, [8, 18], [0, 1], {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+            })
+          : 0;
+
+        return (
+          <div
+            key={enemy.id}
+            style={{
+              position: "absolute",
+              left: enemy.position.x,
+              top: enemy.position.y,
+              opacity: enemyOpacity,
+              transform: "translate(-50%, -50%)",
+              zIndex: isHovered ? 90 : 22,
+            }}
+          >
           <div
             style={{
               position: "absolute",
@@ -187,26 +189,44 @@ export const UnitsLayer: FC<UnitsLayerProps> = ({
           >
             {enemy.label}
           </div>
-          <div
-            style={{
-              position: "absolute",
-              left: 24,
-              top: 18,
-              minWidth: 164,
-              color: "#d6a23a",
-              background: "rgba(17, 22, 18, 0.82)",
-              border: "1px solid rgba(214, 162, 58, 0.42)",
-              padding: "5px 7px",
-              font: '700 10px/1.25 "Lucida Console", "Courier New", monospace',
-              textTransform: "uppercase",
-            }}
-          >
-            {enemy.type}
-            <br />
-            {enemy.role} / size {enemy.size}
+            <div
+              style={{
+                position: "absolute",
+                left: 18,
+                top: 24,
+                width: 260,
+                opacity: tooltipOpacity,
+                color: "#d8decf",
+                background: "#111612",
+                border: "1px solid #d6a23a",
+                boxShadow: "6px 6px 0 rgba(0,0,0,0.46)",
+                padding: 10,
+                font: '700 12px/1.5 "Lucida Console", "Courier New", monospace',
+                textTransform: "uppercase",
+              }}
+            >
+              <strong
+                style={{
+                  display: "block",
+                  color: "#d6a23a",
+                  borderBottom: "1px solid rgba(214,162,58,0.58)",
+                  paddingBottom: 6,
+                  marginBottom: 7,
+                }}
+              >
+                Enemy Unit {enemy.label}
+              </strong>
+              TYPE: {enemy.type}
+              <br />
+              ROLE: {enemy.role}
+              <br />
+              SIZE: {enemy.size}
+              <br />
+              STATE: {enemy.state}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {FRIENDLY_UNITS.map((unit) => {
         const position = lerpPoint(

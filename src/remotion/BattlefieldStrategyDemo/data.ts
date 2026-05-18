@@ -13,13 +13,15 @@ export const BATTLEFIELD_WIDTH = 1920;
 export const BATTLEFIELD_HEIGHT = 1080;
 export const BATTLEFIELD_FPS = 30;
 
-export const OBJECTIVE_TYPING_FRAMES = 88;
-export const PATH_GENERATION_FRAMES = 72;
-export const UNIT_FOCUS_FRAMES = 60;
-export const OVERVIEW_RETURN_FRAMES = 50;
-export const HOVER_TOOLTIP_FRAMES = 62;
-export const PINNED_TOOLTIP_FRAMES = 70;
-export const MOVE_STEP_FRAMES = 72;
+const WORKFLOW_PAUSE_FRAMES = BATTLEFIELD_FPS * 5;
+
+export const OBJECTIVE_TYPING_FRAMES = 88 + WORKFLOW_PAUSE_FRAMES;
+export const PATH_GENERATION_FRAMES = 72 + WORKFLOW_PAUSE_FRAMES;
+export const UNIT_FOCUS_FRAMES = 60 + WORKFLOW_PAUSE_FRAMES;
+export const OVERVIEW_RETURN_FRAMES = 50 + WORKFLOW_PAUSE_FRAMES;
+export const HOVER_TOOLTIP_FRAMES = 62 + WORKFLOW_PAUSE_FRAMES;
+export const PINNED_TOOLTIP_FRAMES = 70 + WORKFLOW_PAUSE_FRAMES;
+export const MOVE_STEP_FRAMES = 72 + WORKFLOW_PAUSE_FRAMES;
 
 export const BATTLEFIELD_DURATION_IN_FRAMES =
   OBJECTIVE_TYPING_FRAMES +
@@ -76,6 +78,7 @@ export const ENEMY_UNITS: EnemyUnit[] = [
     type: "Infantry Element",
     role: "Blocks northern approach",
     size: 6,
+    state: "Hostile near 1-B",
   },
   {
     id: "red-b2",
@@ -84,6 +87,7 @@ export const ENEMY_UNITS: EnemyUnit[] = [
     type: "Support Element",
     role: "Reinforces contested point",
     size: 4,
+    state: "Hostile near 1-B",
   },
   {
     id: "red-i1",
@@ -92,6 +96,7 @@ export const ENEMY_UNITS: EnemyUnit[] = [
     type: "Infantry Element",
     role: "Covers alternate route",
     size: 5,
+    state: "Hostile near 1-I",
   },
   {
     id: "red-i2",
@@ -100,6 +105,7 @@ export const ENEMY_UNITS: EnemyUnit[] = [
     type: "Recon Screen",
     role: "Early contact risk",
     size: 3,
+    state: "Hostile near 1-I",
   },
 ];
 
@@ -157,16 +163,16 @@ const strategyCopy = (
   > = {
     maneuver: {
       label: "Maneuver",
-      color: "#9bdc7e",
-      dash: "10 10",
+      color: "#8fb36a",
+      dash: undefined,
       tooltipTitle: "Maneuver Planner Reasoning",
       tooltipBody:
         "Uniform rule for every friendly unit: take the fastest legal progress toward 1-E. The model accepts more exposure near enemy-held points because tempo and route coverage are prioritized.",
     },
     force: {
       label: "Force",
-      color: "#d6a23a",
-      dash: "3 9",
+      color: "#8fb36a",
+      dash: "1 7",
       tooltipTitle: "Force Planner Reasoning",
       tooltipBody:
         "Uniform rule for every friendly unit: keep the assault group mutually supporting while pushing enemy-held terrain. No unit enters the end target unsupported.",
@@ -174,7 +180,7 @@ const strategyCopy = (
     coordination: {
       label: "Coordination",
       color: "#6e9eb0",
-      dash: "12 8",
+      dash: "9 7",
       tooltipTitle: "Coordination Planner Reasoning",
       tooltipBody:
         "Uniform rule for every friendly unit: preserve split-path coverage and synchronize the critical entry. The final move waits until all blue elements can converge on 1-E together.",

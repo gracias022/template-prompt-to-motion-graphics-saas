@@ -202,16 +202,6 @@ export const ReasoningPanel: FC<ReasoningPanelProps> = ({
             </div>
           ))}
         </div>
-        <p
-          style={{
-            margin: 0,
-            color: "#d8decf",
-            fontSize: 13,
-            lineHeight: 1.35,
-          }}
-        >
-          {move.reasoning.headline}
-        </p>
       </Card>
 
       <Card

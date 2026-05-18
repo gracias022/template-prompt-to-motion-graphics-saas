@@ -1,9 +1,15 @@
-import { MousePointer2, X } from "lucide-react";
+import { MousePointer2 } from "lucide-react";
 import type { FC } from "react";
 import { interpolate, spring, useVideoConfig } from "remotion";
 
 import { UNIT_ORDER } from "../data";
-import type { MoveStep, Point, StrategyId, TooltipKind, TooltipMode } from "../types";
+import type {
+  MoveStep,
+  Point,
+  StrategyId,
+  TooltipKind,
+  TooltipMode,
+} from "../types";
 
 interface TooltipLayerProps {
   move: MoveStep;
@@ -11,6 +17,7 @@ interface TooltipLayerProps {
   tooltipStrategyId: StrategyId | null;
   tooltipMode: TooltipMode;
   tooltipKind: TooltipKind;
+  durationInFrames: number;
 }
 
 export const TooltipLayer: FC<TooltipLayerProps> = ({
@@ -19,6 +26,7 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
   tooltipStrategyId,
   tooltipMode,
   tooltipKind,
+  durationInFrames,
 }) => {
   const { fps } = useVideoConfig();
 
@@ -71,14 +79,24 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
 
   const visible =
     tooltipMode === "hover"
-      ? interpolate(frame, [4, 14, 50, 61], [0, 1, 1, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })
-      : interpolate(frame, [2, 12, 54, 69], [0, 1, 1, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        });
+      ? interpolate(
+          frame,
+          [4, 14, durationInFrames - 16, durationInFrames - 1],
+          [0, 1, 1, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        )
+      : interpolate(
+          frame,
+          [2, 12, durationInFrames - 18, durationInFrames - 1],
+          [0, 1, 1, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        );
   const scale = spring({
     frame: Math.max(0, frame - 6),
     fps,
@@ -86,10 +104,15 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
   });
   const closePress =
     tooltipMode === "pinned"
-      ? interpolate(frame, [50, 56, 62], [0, 1, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })
+      ? interpolate(
+          frame,
+          [durationInFrames - 34, durationInFrames - 26, durationInFrames - 18],
+          [0, 1, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        )
       : 0;
   const pathCursorOpacity =
     tooltipMode === "hover"
@@ -100,10 +123,20 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
         });
   const closeCursorOpacity =
     tooltipMode === "pinned"
-      ? interpolate(frame, [46, 54, 63, 69], [0, 1, 1, 0], {
-          extrapolateLeft: "clamp",
-          extrapolateRight: "clamp",
-        })
+      ? interpolate(
+          frame,
+          [
+            durationInFrames - 40,
+            durationInFrames - 30,
+            durationInFrames - 16,
+            durationInFrames - 1,
+          ],
+          [0, 1, 1, 0],
+          {
+            extrapolateLeft: "clamp",
+            extrapolateRight: "clamp",
+          },
+        )
       : 0;
   const offset = tooltip.offset;
   const lineEnd = { x: offset.x, y: offset.y + 88 };
@@ -181,22 +214,22 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
           >
             {tooltip.title}
           </div>
-          <div
-            style={{
-              width: 24,
-              height: 24,
-              display: "grid",
-              placeItems: "center",
-              flexShrink: 0,
-              border: "1px solid rgba(214,162,58,0.78)",
-              background:
-                closePress > 0.25 ? "#d6a23a" : "rgba(214,162,58,0.08)",
-              color: closePress > 0.25 ? "#111612" : "#d6a23a",
-              transform: `scale(${interpolate(closePress, [0, 1], [1, 0.9])})`,
-            }}
-          >
-            <X size={15} strokeWidth={3} />
-          </div>
+          {tooltipMode === "pinned" ? (
+            <div
+              style={{
+                flexShrink: 0,
+                padding: "4px 6px",
+                border: "1px solid rgba(214,162,58,0.78)",
+                background:
+                  closePress > 0.25 ? "#d6a23a" : "rgba(214,162,58,0.08)",
+                color: closePress > 0.25 ? "#111612" : "#d6a23a",
+                font: '900 10px "Lucida Console", "Courier New", monospace',
+                textTransform: "uppercase",
+              }}
+            >
+              Click away
+            </div>
+          ) : null}
         </div>
         <p
           style={{
@@ -224,7 +257,9 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
             textTransform: "uppercase",
           }}
         >
-          {tooltipMode === "pinned" ? "Pinned on click" : "Hover preview"}
+          {tooltipMode === "pinned"
+            ? "Pinned on click - click anywhere to close"
+            : "Hover preview"}
         </div>
       </div>
 
@@ -250,8 +285,8 @@ export const TooltipLayer: FC<TooltipLayerProps> = ({
       <div
         style={{
           position: "absolute",
-          left: offset.x + 362,
-          top: offset.y + 2,
+          left: offset.x + 436,
+          top: offset.y + 214,
           opacity: closeCursorOpacity,
           color: "#eef3e7",
           filter: "drop-shadow(0 3px 5px rgba(0,0,0,0.55))",

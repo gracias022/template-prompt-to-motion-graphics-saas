@@ -40,6 +40,7 @@ export interface EnemyUnit {
   type: string;
   role: string;
   size: number;
+  state: string;
 }
 
 export interface MapNode {
@@ -53,7 +54,7 @@ export interface StrategyPath {
   id: StrategyId;
   label: string;
   color: string;
-  dash: string;
+  dash?: string;
   unitPaths: Record<UnitId, Point[]>;
   tooltipTitle: string;
   tooltipBody: string;

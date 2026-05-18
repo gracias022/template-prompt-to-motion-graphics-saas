@@ -56,6 +56,7 @@ interface DemoSceneConfig {
   navigationAction: NavigationAction;
   animateMove: boolean;
   isGenerating: boolean;
+  hoveredEnemyId: string | null;
   annotation: AnnotationId | null;
   highlightAssess: boolean;
   highlightMap: boolean;
@@ -73,7 +74,7 @@ const annotationText: Record<AnnotationId, string> = {
   focus: "User can focus on a single unit's strategy options",
   overview: "Return to full tactical overview",
   hover: "Hover to view reasoning for this strategy",
-  pin: "Click path to pin reasoning",
+  pin: "Click path to pin reasoning; click anywhere to close",
   navigation: "Step through moves to see evolving strategies",
   reasoning: "Agent explains why the chosen move is optimal",
 };
@@ -374,6 +375,8 @@ const BattlefieldDemoScene: FC<BattlefieldDemoSceneProps> = ({
                   tooltipKind={config.tooltipKind}
                   animateMove={config.animateMove}
                   isGenerating={config.isGenerating}
+                  durationInFrames={durationInFrames}
+                  hoveredEnemyId={config.hoveredEnemyId}
                   highlight={config.highlightMap}
                 />
                 <NavigationControls
@@ -408,6 +411,7 @@ const baseScene = {
   navigationAction: "none",
   animateMove: false,
   isGenerating: false,
+  hoveredEnemyId: null,
   annotation: null,
   highlightAssess: false,
   highlightMap: false,
@@ -452,6 +456,8 @@ const overviewScene: DemoSceneConfig = {
   showPaths: true,
   annotation: "overview",
   highlightMap: true,
+  hoveredEnemyId: "cycle",
+  highlightCard: "unit",
 };
 
 const hoverTooltipScene: DemoSceneConfig = {

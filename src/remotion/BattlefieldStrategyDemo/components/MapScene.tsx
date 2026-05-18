@@ -23,6 +23,8 @@ interface MapSceneProps {
   tooltipKind: TooltipKind;
   animateMove: boolean;
   isGenerating: boolean;
+  durationInFrames: number;
+  hoveredEnemyId: string | null;
   highlight?: boolean;
 }
 
@@ -66,6 +68,8 @@ export const MapScene: FC<MapSceneProps> = ({
   tooltipKind,
   animateMove,
   isGenerating,
+  durationInFrames,
+  hoveredEnemyId,
   highlight = false,
 }) => {
   const { fps } = useVideoConfig();
@@ -267,6 +271,7 @@ export const MapScene: FC<MapSceneProps> = ({
         frame={frame}
         selectedUnitId={selectedUnitId}
         animateMove={animateMove}
+        hoveredEnemyId={hoveredEnemyId}
       />
       <TooltipLayer
         move={move}
@@ -274,6 +279,7 @@ export const MapScene: FC<MapSceneProps> = ({
         tooltipStrategyId={tooltipStrategyId}
         tooltipMode={tooltipMode}
         tooltipKind={tooltipKind}
+        durationInFrames={durationInFrames}
       />
 
       <div
@@ -306,9 +312,9 @@ export const MapScene: FC<MapSceneProps> = ({
           border: "1px solid #465147",
         }}
       >
-        <LegendStroke color="#9bdc7e" label="Maneuver planner path" dash="10 10" />
-        <LegendStroke color="#8fb36a" label="Force planner path" dash="3 9" />
-        <LegendStroke color="#6e9eb0" label="Coordination planner path" dash="12 8" />
+        <LegendStroke color="#8fb36a" label="Maneuver planner path" />
+        <LegendStroke color="#8fb36a" label="Force planner path" dash="1 7" />
+        <LegendStroke color="#6e9eb0" label="Coordination planner path" dash="9 7" />
         <LegendStroke color="#d6a23a" label="Tactical decision path" />
       </div>
     </div>
