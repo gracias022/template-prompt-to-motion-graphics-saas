@@ -8,6 +8,7 @@ import {
   BattlefieldStrategyDemo,
 } from "./BattlefieldStrategyDemo";
 import { DynamicComp } from "./DynamicComp";
+import { MyScene } from "./examples/MyScene";
 
 const defaultCode = `import { AbsoluteFill } from "remotion";
 export const MyAnimation = () => <AbsoluteFill style={{ backgroundColor: "#000" }} />;`;
@@ -35,6 +36,14 @@ export const RemotionRoot: React.FC = () => {
         fps={BATTLEFIELD_FPS}
         width={BATTLEFIELD_WIDTH}
         height={BATTLEFIELD_HEIGHT}
+      />
+      <Composition
+        id="MyScene"
+        component={MyScene}
+        durationInFrames={180}
+        fps={30}
+        width={1920}
+        height={1080}
       />
     </>
   );
