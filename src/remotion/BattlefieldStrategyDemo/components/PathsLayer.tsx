@@ -124,6 +124,7 @@ export const PathsLayer: FC<PathsLayerProps> = ({
       style={{
         position: "absolute",
         inset: 0,
+        zIndex: 15,
         overflow: "visible",
         pointerEvents: "none",
       }}

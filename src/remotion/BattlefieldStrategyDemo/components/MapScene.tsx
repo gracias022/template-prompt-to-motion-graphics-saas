@@ -312,9 +312,9 @@ export const MapScene: FC<MapSceneProps> = ({
           border: "1px solid #465147",
         }}
       >
-        <LegendStroke color="#8fb36a" label="Maneuver planner path" />
-        <LegendStroke color="#8fb36a" label="Force planner path" dash="1 7" />
-        <LegendStroke color="#6e9eb0" label="Coordination planner path" dash="9 7" />
+        <LegendStroke color="#d985ff" label="Maneuver planner path" />
+        <LegendStroke color="#c8e889" label="Force planner path" dash="1 7" />
+        <LegendStroke color="#91c7dc" label="Coordination planner path" dash="9 7" />
         <LegendStroke color="#d6a23a" label="Tactical decision path" />
       </div>
     </div>

@@ -161,7 +161,7 @@ const strategyCopy = (
   > = {
     maneuver: {
       label: "Maneuver",
-      color: "#8fb36a",
+      color: "#d985ff",
       dash: undefined,
       tooltipTitle: "Maneuver Planner Reasoning",
       tooltipBody:
@@ -169,7 +169,7 @@ const strategyCopy = (
     },
     force: {
       label: "Force",
-      color: "#8fb36a",
+      color: "#c8e889",
       dash: "1 7",
       tooltipTitle: "Force Planner Reasoning",
       tooltipBody:
@@ -177,7 +177,7 @@ const strategyCopy = (
     },
     coordination: {
       label: "Coordination",
-      color: "#6e9eb0",
+      color: "#91c7dc",
       dash: "9 7",
       tooltipTitle: "Coordination Planner Reasoning",
       tooltipBody:

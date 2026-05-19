@@ -68,10 +68,10 @@ interface BattlefieldDemoSceneProps {
 
 const annotationText: Record<AnnotationId, string> = {
   objective: "User selects an OCA and enters mission strategy",
-  paths: "Simulator generates multiple strategy paths per unit",
-  focus: "User can focus on a single unit's strategy options",
+  paths: "Simulator generates multiple planner paths per unit",
+  focus: "User can focus on a single unit's planner paths",
   overview: "Return to full tactical overview",
-  hover: "Hover to view reasoning for this strategy",
+  hover: "Hover to view reasoning for this planner path",
   pin: "Click path to pin reasoning; click anywhere to close",
   navigation: "Step through moves to see evolving strategies",
   reasoning: "Agent explains why the chosen move is optimal",

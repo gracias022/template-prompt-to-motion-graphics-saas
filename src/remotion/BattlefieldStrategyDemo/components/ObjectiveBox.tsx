@@ -68,6 +68,15 @@ export const ObjectiveBox: FC<ObjectiveBoxProps> = ({
           extrapolateRight: "clamp",
         })
       : 0;
+  const selectedOca = mode === "typing" && frame < 16 ? "" : "LILY";
+  const ocaSelectPulse =
+    mode === "typing"
+      ? interpolate(frame, [4, 12, 20], [0, 1, 0], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        })
+      : 0;
+  const isProfileReady = mode !== "typing";
   const highlightGlow = highlight
     ? interpolate(frame % 36, [0, 18, 35], [0.42, 0.9, 0.42], {
         extrapolateLeft: "clamp",
@@ -137,18 +146,26 @@ export const ObjectiveBox: FC<ObjectiveBoxProps> = ({
           >
             OCA Selection
             <select
-              defaultValue="LILY"
+              key={selectedOca}
+              defaultValue={selectedOca}
               style={{
                 width: "100%",
-                border: "1px solid #465147",
+                border: `1px solid ${
+                  ocaSelectPulse > 0.2 ? "#d6a23a" : "#465147"
+                }`,
                 borderRadius: 0,
                 padding: 8,
                 background: "#18201b",
                 color: "#d8decf",
                 font: '13px/1.35 "Lucida Console", "Courier New", monospace',
                 outline: "none",
+                boxShadow:
+                  ocaSelectPulse > 0.2
+                    ? "0 0 14px rgba(214,162,58,0.42)"
+                    : "none",
               }}
             >
+              <option value="">Select OCA</option>
               <option>LILY</option>
               <option>LESTER</option>
             </select>
@@ -257,86 +274,108 @@ export const ObjectiveBox: FC<ObjectiveBoxProps> = ({
             >
               Strategy Profile
             </h3>
-            <Status label="Low Risk" amber />
+            <Status label={isProfileReady ? "Low Risk" : "Pending"} amber={isProfileReady} />
           </div>
-          <div style={{ display: "grid", gap: 9, padding: 10 }}>
-            <h3
-              style={{
-                margin: 0,
-                color: "#eef3e7",
-                font: '700 13px "Lucida Console", "Courier New", monospace',
-                textTransform: "uppercase",
-              }}
-            >
-              Coordinated Critical Entry
-            </h3>
-            <p
-              style={{
-                margin: 0,
-                color: "#a7b09f",
-                fontSize: 13,
-                lineHeight: 1.35,
-              }}
-            >
-              Secure approach paths and consolidate friendly units before
-              committing into the critical point.
-            </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {["Split then sync", "Full-force entry", "Avoid solo engage"].map(
-                (tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      border: "1px solid #465147",
-                      padding: "4px 6px",
-                      color: "#d8decf",
-                      background: "#1a211c",
-                      font: '700 10px "Lucida Console", "Courier New", monospace',
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ),
-              )}
-            </div>
-            {[
-              ["Coordination", 50, "0.50"],
-              ["Preservation", 35, "0.35"],
-              ["Speed", 15, "0.15"],
-            ].map(([label, width, value]) => (
-              <div
-                key={label}
+          {isProfileReady ? (
+            <div style={{ display: "grid", gap: 9, padding: 10 }}>
+              <h3
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "116px 1fr 42px",
-                  gap: 8,
-                  alignItems: "center",
-                  color: "#a7b09f",
-                  font: '700 11px "Lucida Console", "Courier New", monospace',
+                  margin: 0,
+                  color: "#eef3e7",
+                  font: '700 13px "Lucida Console", "Courier New", monospace',
                   textTransform: "uppercase",
                 }}
               >
-                <span>{label}</span>
+                Coordinated Critical Entry
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#a7b09f",
+                  fontSize: 13,
+                  lineHeight: 1.35,
+                }}
+              >
+                Secure approach paths and consolidate friendly units before
+                committing into the critical point.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {["Split then sync", "Full-force entry", "Avoid solo engage"].map(
+                  (tag) => (
+                    <span
+                      key={tag}
+                      style={{
+                        border: "1px solid #465147",
+                        padding: "4px 6px",
+                        color: "#d8decf",
+                        background: "#1a211c",
+                        font: '700 10px "Lucida Console", "Courier New", monospace',
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ),
+                )}
+              </div>
+              {[
+                ["Coordination", 50, "0.50"],
+                ["Preservation", 35, "0.35"],
+                ["Speed", 15, "0.15"],
+              ].map(([label, width, value]) => (
                 <div
+                  key={label}
                   style={{
-                    height: 10,
-                    background: "#121713",
-                    border: "1px solid #465147",
+                    display: "grid",
+                    gridTemplateColumns: "116px 1fr 42px",
+                    gap: 8,
+                    alignItems: "center",
+                    color: "#a7b09f",
+                    font: '700 11px "Lucida Console", "Courier New", monospace',
+                    textTransform: "uppercase",
                   }}
                 >
+                  <span>{label}</span>
                   <div
                     style={{
-                      height: "100%",
-                      width: `${width}%`,
-                      background: "#8fb36a",
+                      height: 10,
+                      background: "#121713",
+                      border: "1px solid #465147",
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${width}%`,
+                        background: "#8fb36a",
+                      }}
+                    />
+                  </div>
+                  <b>{value}</b>
                 </div>
-                <b>{value}</b>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                minHeight: 172,
+                placeItems: "center",
+                padding: 14,
+                color: "#a7b09f",
+                background:
+                  "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), #1a211c",
+                backgroundSize: "16px 16px",
+                font: '700 12px/1.45 "Lucida Console", "Courier New", monospace',
+                textAlign: "center",
+                textTransform: "uppercase",
+              }}
+            >
+              No strategy profile extracted yet.
+              <br />
+              Select OCA and specify mission strategy, then extract.
+            </div>
+          )}
         </div>
       </div>
     </aside>
