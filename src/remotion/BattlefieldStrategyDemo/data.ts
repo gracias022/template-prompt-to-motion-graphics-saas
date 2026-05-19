@@ -141,9 +141,9 @@ const afterSynchronizedEntry: Record<UnitId, Point> = {
 };
 
 const finalSecurePositions: Record<UnitId, Point> = {
-  "331": p(928, 316),
-  "332": p(936, 386),
-  "333": p(978, 350),
+  "331": p(920, 326),
+  "332": p(912, 390),
+  "333": p(968, 354),
 };
 
 const strategyCopy = (
@@ -449,20 +449,20 @@ export const MOVES: MoveStep[] = [
     bestStrategyId: "maneuver",
     paths: finalRoutes,
     actions: [
-      { unitId: "331", action: "SECURE", from: "1-E", to: "north edge" },
-      { unitId: "332", action: "SECURE", from: "1-E", to: "south edge" },
-      { unitId: "333", action: "SECURE", from: "1-E", to: "east edge" },
+      { unitId: "331", action: "HOLD", from: "1-E", to: "1-E" },
+      { unitId: "332", action: "HOLD", from: "1-E", to: "1-E" },
+      { unitId: "333", action: "HOLD", from: "1-E", to: "1-E" },
     ],
     reasoning: {
-      headline: "Best next step: Hold the endpoint",
+      headline: "Terminal state: Endpoint secured",
       chosenMove:
-        "Fan out just enough to secure Hill 482 while keeping every unit tied to 1-E.",
+        "No additional movement is required; all friendly units hold at 1-E.",
       explanation:
-        "After capture, the simulator favors a short maneuver step that improves perimeter coverage without breaking the mutual-support constraint around the flag.",
+        "After synchronized entry, the simulator terminates movement planning because the endpoint is secured by all friendly units at the critical point.",
       factors: [
         "Critical point remains controlled by all friendly units",
-        "Perimeter spacing blocks immediate counterattack lanes",
-        "No unit drifts beyond support range",
+        "No follow-on move is needed after reaching 1-E",
+        "The next-step table remains anchored to valid map nodes",
       ],
       confidence: 90,
     },

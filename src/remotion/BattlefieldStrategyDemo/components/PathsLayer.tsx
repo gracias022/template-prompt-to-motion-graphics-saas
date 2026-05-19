@@ -103,11 +103,10 @@ export const PathsLayer: FC<PathsLayerProps> = ({
         config: { damping: 15, stiffness: 170 },
       })
     : 0;
-  const labelOpacity = interpolate(frame, [18, 32], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
   const focusOpacity = selectedUnitId ? 1 : 0;
+  const isTerminalHold = move.actions.every(
+    (action) => action.action === "HOLD",
+  );
   const bestPath = move.paths.find((path) => path.id === move.bestStrategyId);
   const actionForUnit = (unitId: UnitId) =>
     move.actions.find((action) => action.unitId === unitId);
@@ -182,16 +181,6 @@ export const PathsLayer: FC<PathsLayerProps> = ({
               strokeWidth={2}
             />
             <circle cx={start.x} cy={start.y} r={5} fill="#eef3e7" />
-            <text
-              x={start.x + 18}
-              y={start.y - 14}
-              fill="#eef3e7"
-              fontFamily='"Lucida Console", "Courier New", monospace'
-              fontSize="11"
-              fontWeight="700"
-            >
-              START {unitId}
-            </text>
           </g>
         );
       })}
@@ -220,33 +209,35 @@ export const PathsLayer: FC<PathsLayerProps> = ({
         </g>
       ) : null}
 
-      {move.paths.flatMap((strategy, strategyIndex) =>
-        segmentsForStrategy(strategy, visibleUnitIds).map((segment, index) => {
-          const stagger = strategyIndex * 5 + index * 2;
-          const segmentOpacity =
-            reveal *
-            interpolate(frame, [8 + stagger, 26 + stagger], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            });
+      {isTerminalHold
+        ? null
+        : move.paths.flatMap((strategy, strategyIndex) =>
+            segmentsForStrategy(strategy, visibleUnitIds).map((segment, index) => {
+              const stagger = strategyIndex * 5 + index * 2;
+              const segmentOpacity =
+                reveal *
+                interpolate(frame, [8 + stagger, 26 + stagger], [0, 1], {
+                  extrapolateLeft: "clamp",
+                  extrapolateRight: "clamp",
+                });
 
-          return (
-            <ArrowSegment
-              key={`${strategy.id}-${segment.unitId}-${segment.segmentIndex}`}
-              segment={segment}
-              markerId={`arrow-${move.index}-${strategy.id}`}
-              opacity={segmentOpacity}
-              strokeWidth={3.4}
-              color={strategy.color}
-              progress={1}
-              dashed
-              glow={false}
-            />
-          );
-        }),
-      )}
+              return (
+                <ArrowSegment
+                  key={`${strategy.id}-${segment.unitId}-${segment.segmentIndex}`}
+                  segment={segment}
+                  markerId={`arrow-${move.index}-${strategy.id}`}
+                  opacity={segmentOpacity}
+                  strokeWidth={3.4}
+                  color={strategy.color}
+                  progress={1}
+                  dashed
+                  glow={false}
+                />
+              );
+            }),
+          )}
 
-      {bestPath
+      {!isTerminalHold && bestPath
         ? visibleUnitIds.map((unitId, index) => {
             const points = bestPath.unitPaths[unitId];
             const action = actionForUnit(unitId);
@@ -308,39 +299,6 @@ export const PathsLayer: FC<PathsLayerProps> = ({
             );
           })
         : null}
-
-      {move.paths.map((strategy, index) => {
-        const labelPath = strategy.unitPaths[selectedUnitId ?? "331"];
-        const anchor = labelPath[Math.min(1, labelPath.length - 1)];
-        const isBest = strategy.id === move.bestStrategyId;
-
-        return (
-          <g
-            key={`strategy-label-${strategy.id}`}
-            opacity={reveal * labelOpacity * (isBest ? 1 : 0.72)}
-            transform={`translate(${anchor.x + 18}, ${anchor.y - 38 + index * 22})`}
-          >
-            <rect
-              width={isBest ? 184 : 156}
-              height="32"
-              fill="rgba(17, 22, 18, 0.88)"
-              stroke={isBest ? BEST_ARROW_COLOR : strategy.color}
-              strokeOpacity={isBest ? 1 : 0.64}
-            />
-            <text
-              x="10"
-              y="21"
-              fill="#eef3e7"
-              fontFamily='"Lucida Console", "Courier New", monospace'
-              fontSize="12"
-              fontWeight="700"
-            >
-              {isBest ? "BEST: " : ""}
-              {strategy.label}
-            </text>
-          </g>
-        );
-      })}
     </svg>
   );
 };
